@@ -58,6 +58,12 @@ public class Registro {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Column(name = "questoes_revisao_feitas")
+    private Integer questoesRevisaoFeitas = 0;
+
+    @Column(name = "questoes_revisao_acertadas")
+    private Integer questoesRevisaoAcertadas = 0;
+
     // Construtor Padrão
     public Registro() {}
 
@@ -103,4 +109,19 @@ public class Registro {
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
+    public Integer getQuestoesRevisaoFeitas() {
+    return questoesRevisaoFeitas;
+    }
+
+    public void setQuestoesRevisaoFeitas(Integer questoesRevisaoFeitas) {
+        this.questoesRevisaoFeitas = questoesRevisaoFeitas;
+    }
+
+    public Integer getQuestoesRevisaoAcertadas() {
+        return questoesRevisaoAcertadas;
+    }
+
+    public void setQuestoesRevisaoAcertadas(Integer questoesRevisaoAcertadas) {
+        this.questoesRevisaoAcertadas = questoesRevisaoAcertadas;
+    }
 }
