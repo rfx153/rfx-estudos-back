@@ -4,8 +4,8 @@ WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# Etapa 2: Execução leve usando apenas o JRE do Java 17
-FROM openjdk:17-jdk-slim
+# Etapa 2: Execução leve usando a imagem oficial do Eclipse Temurin (Java 17)
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
