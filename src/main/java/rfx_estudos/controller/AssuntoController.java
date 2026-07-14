@@ -19,7 +19,7 @@ import rfx_estudos.service.AssuntoService;
 
 @RestController
 @RequestMapping("/api/assuntos")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "${app.frontend.url}")
 public class AssuntoController {
 
     @Autowired
