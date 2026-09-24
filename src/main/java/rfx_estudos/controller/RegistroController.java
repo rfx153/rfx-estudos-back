@@ -1,7 +1,9 @@
 package rfx_estudos.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,18 +45,26 @@ public class RegistroController {
     }
 
     @GetMapping("/recentes")
-    public List<Registro> listarRecentes(
+    public Page<Registro> listarRecentes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
             @RequestParam(defaultValue = "100") int limite,
             @RequestParam(required = false) Long materiaId
     ) {
-        int limiteSeguro = Math.min(Math.max(limite, 1), 200);
-        PageRequest pagina = PageRequest.of(0, limiteSeguro);
+        int tamanhoSolicitado = size != null ? size : limite;
+        int tamanhoSeguro = Math.min(Math.max(tamanhoSolicitado, 1), 50);
+        int paginaSegura = Math.max(page, 0);
+        PageRequest pagina = PageRequest.of(
+                paginaSegura,
+                tamanhoSeguro,
+                Sort.by(Sort.Direction.DESC, "dataEstudo").and(Sort.by(Sort.Direction.DESC, "id"))
+        );
 
         if (materiaId != null) {
-            return registroRepository.findByMateriaIdOrderByDataEstudoDesc(materiaId, pagina);
+            return registroRepository.buscarHistoricoPorMateria(materiaId, pagina);
         }
 
-        return registroRepository.findByOrderByDataEstudoDesc(pagina);
+        return registroRepository.buscarHistorico(pagina);
     }
 
     // Rota: http://localhost:8080/api/registros (Salvar uma nova sessão realizada)
