@@ -13,8 +13,13 @@ public class Materia {
     @Column(nullable = false, length = 100)
     private String nome;
 
-    @Column(length = 255)
-    private String categorias;
+    @ManyToMany
+    @JoinTable(
+        name = "materia_categorias",
+        joinColumns = @JoinColumn(name = "materia_id"),
+        inverseJoinColumns = @JoinColumn(name = "categoria_id")
+    )
+    private java.util.Set<Categoria> categorias = new java.util.HashSet<>();
 
     // Construtor Padrão (Exigido pelo JPA)
     public Materia() {}
@@ -26,6 +31,6 @@ public class Materia {
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 
-    public String getCategorias() { return categorias; }
-    public void setCategorias(String categorias) { this.categorias = categorias; }
+    public java.util.Set<Categoria> getCategorias() { return categorias; }
+    public void setCategorias(java.util.Set<Categoria> categorias) { this.categorias = categorias; }
 }
