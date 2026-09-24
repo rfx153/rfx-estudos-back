@@ -3,6 +3,7 @@ package rfx_estudos.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -47,6 +48,17 @@ public class MateriaController {
                     materia.setNome(dados.getNome());
                     materia.setCategorias(categoriasExistentes(dados));
                     return ResponseEntity.ok(materiaRepository.save(materia));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        return materiaRepository.findById(id)
+                .map(materia -> {
+                    materia.getCategorias().clear();
+                    materiaRepository.delete(materia);
+                    return ResponseEntity.noContent().<Void>build();
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

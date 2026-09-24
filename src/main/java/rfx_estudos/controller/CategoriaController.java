@@ -35,4 +35,14 @@ public class CategoriaController {
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        if (!categoriaRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        categoriaRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }
