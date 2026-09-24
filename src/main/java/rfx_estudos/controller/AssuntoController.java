@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,5 +47,16 @@ public class AssuntoController {
         // Busca a matéria pelo ID vindo do DTO, associa ao novo Assunto e salva
         Assunto assuntoSalvo = assuntoService.salvarComMateria(dto);
         return ResponseEntity.ok(assuntoSalvo);
-}
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Assunto> atualizar(@PathVariable Long id, @RequestBody Assunto dados) {
+        return assuntoRepository.findById(id)
+                .map(assunto -> {
+                    assunto.setNome(dados.getNome());
+                    return ResponseEntity.ok(assuntoRepository.save(assunto));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+   
 }
