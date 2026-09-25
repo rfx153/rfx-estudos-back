@@ -26,7 +26,7 @@ public class Registro {
     private MaterialTipo materialTipo;
 
     @ManyToOne
-    @JoinColumn(name = "planejamento_fk")
+    @JoinColumn(name = "ciclo_fk")
     private Ciclo planejamento;
 
     @ManyToOne
