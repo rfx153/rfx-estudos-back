@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -71,6 +72,33 @@ public class RegistroController {
     @PostMapping
     public Registro salvarSessao(@RequestBody Registro novoRegistro) {
         return registroRepository.save(novoRegistro);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Registro> atualizar(@PathVariable Long id, @RequestBody Registro registroAtualizado) {
+        return registroRepository.findById(id)
+                .map(registro -> {
+                    registro.setMateria(registroAtualizado.getMateria());
+                    registro.setAssunto(registroAtualizado.getAssunto());
+                    registro.setMaterialTipo(registroAtualizado.getMaterialTipo());
+                    registro.setPlanejamento(registroAtualizado.getPlanejamento());
+                    registro.setTipoRegistro(registroAtualizado.getTipoRegistro());
+                    registro.setMaterialNome(registroAtualizado.getMaterialNome());
+                    registro.setPuntoParada(registroAtualizado.getPuntoParada());
+                    registro.setQuestoesFeitas(registroAtualizado.getQuestoesFeitas());
+                    registro.setQuestoesAcertadas(registroAtualizado.getQuestoesAcertadas());
+                    registro.setRevisaoAssunto(registroAtualizado.getRevisaoAssunto());
+                    registro.setRevisaoComplemento(registroAtualizado.getRevisaoComplemento());
+                    registro.setDataEstudo(registroAtualizado.getDataEstudo());
+                    registro.setTempoEstudado(registroAtualizado.getTempoEstudado());
+                    registro.setLinkDocumento(registroAtualizado.getLinkDocumento());
+                    registro.setObservacoes(registroAtualizado.getObservacoes());
+                    registro.setQuestoesRevisaoFeitas(registroAtualizado.getQuestoesRevisaoFeitas());
+                    registro.setQuestoesRevisaoAcertadas(registroAtualizado.getQuestoesRevisaoAcertadas());
+
+                    return ResponseEntity.ok(registroRepository.save(registro));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
