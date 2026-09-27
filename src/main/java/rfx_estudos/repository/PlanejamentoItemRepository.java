@@ -10,6 +10,9 @@ import java.util.List;
 @Repository
 public interface PlanejamentoItemRepository extends JpaRepository<PlanejamentoItem, Long> {
 
-    @EntityGraph(attributePaths = {"planejamento", "materia", "assunto", "materialTipo"})
+    @EntityGraph(attributePaths = {"planejamento", "planejamentoMateria", "materia", "assunto", "materialTipo"})
     List<PlanejamentoItem> findByPlanejamentoIdOrderByOrdemAscIdAsc(Long planejamentoId);
+
+    @EntityGraph(attributePaths = {"planejamento", "planejamentoMateria", "materia", "assunto", "materialTipo"})
+    List<PlanejamentoItem> findByPlanejamentoMateriaIdOrderByOrdemAscIdAsc(Long planejamentoMateriaId);
 }

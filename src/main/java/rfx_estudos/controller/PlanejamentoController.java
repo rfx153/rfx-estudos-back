@@ -15,9 +15,11 @@ import rfx_estudos.domain.Ciclo;
 import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoCiclo;
 import rfx_estudos.domain.PlanejamentoItem;
+import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.repository.CicloRepository;
 import rfx_estudos.repository.PlanejamentoCicloRepository;
 import rfx_estudos.repository.PlanejamentoItemRepository;
+import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
 
 import java.util.List;
@@ -32,6 +34,9 @@ public class PlanejamentoController {
 
     @Autowired
     private PlanejamentoItemRepository planejamentoItemRepository;
+
+    @Autowired
+    private PlanejamentoMateriaRepository planejamentoMateriaRepository;
 
     @Autowired
     private PlanejamentoCicloRepository planejamentoCicloRepository;
@@ -82,6 +87,81 @@ public class PlanejamentoController {
         return ResponseEntity.noContent().build();
     }
 
+
+    @GetMapping("/{id}/materias")
+    public ResponseEntity<List<PlanejamentoMateria>> listarMaterias(@PathVariable Long id) {
+        if (!planejamentoRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(planejamentoMateriaRepository.findByPlanejamentoIdOrderByOrdemAscMateriaNomeAsc(id));
+    }
+
+    @PostMapping("/{id}/materias")
+    public ResponseEntity<PlanejamentoMateria> criarMateria(@PathVariable Long id, @RequestBody PlanejamentoMateria dados) {
+        return planejamentoRepository.findById(id)
+                .map(planejamento -> {
+                    dados.setId(null);
+                    dados.setPlanejamento(planejamento);
+                    return ResponseEntity.ok(planejamentoMateriaRepository.save(dados));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/materias/{planejamentoMateriaId}")
+    public ResponseEntity<PlanejamentoMateria> atualizarMateria(
+            @PathVariable Long planejamentoMateriaId,
+            @RequestBody PlanejamentoMateria dados
+    ) {
+        return planejamentoMateriaRepository.findById(planejamentoMateriaId)
+                .map(planejamentoMateria -> {
+                    planejamentoMateria.setMateria(dados.getMateria());
+                    planejamentoMateria.setPrioridade(dados.getPrioridade());
+                    planejamentoMateria.setDataPrevista(dados.getDataPrevista());
+                    planejamentoMateria.setStatus(dados.getStatus());
+                    planejamentoMateria.setDataFinalizacao(dados.getDataFinalizacao());
+                    planejamentoMateria.setOrdem(dados.getOrdem());
+                    planejamentoMateria.setObservacoes(dados.getObservacoes());
+                    return ResponseEntity.ok(planejamentoMateriaRepository.save(planejamentoMateria));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/materias/{planejamentoMateriaId}")
+    public ResponseEntity<Void> excluirMateria(@PathVariable Long planejamentoMateriaId) {
+        if (!planejamentoMateriaRepository.existsById(planejamentoMateriaId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        planejamentoMateriaRepository.deleteById(planejamentoMateriaId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/materias/{planejamentoMateriaId}/itens")
+    public ResponseEntity<List<PlanejamentoItem>> listarItensDaMateria(@PathVariable Long planejamentoMateriaId) {
+        if (!planejamentoMateriaRepository.existsById(planejamentoMateriaId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(planejamentoItemRepository.findByPlanejamentoMateriaIdOrderByOrdemAscIdAsc(planejamentoMateriaId));
+    }
+
+    @PostMapping("/materias/{planejamentoMateriaId}/itens")
+    public ResponseEntity<PlanejamentoItem> criarItemDaMateria(
+            @PathVariable Long planejamentoMateriaId,
+            @RequestBody PlanejamentoItem item
+    ) {
+        return planejamentoMateriaRepository.findById(planejamentoMateriaId)
+                .map(planejamentoMateria -> {
+                    item.setId(null);
+                    item.setPlanejamentoMateria(planejamentoMateria);
+                    item.setPlanejamento(planejamentoMateria.getPlanejamento());
+                    item.setMateria(planejamentoMateria.getMateria());
+                    return ResponseEntity.ok(planejamentoItemRepository.save(item));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}/itens")
     public ResponseEntity<List<PlanejamentoItem>> listarItens(@PathVariable Long id) {
         if (!planejamentoRepository.existsById(id)) {
@@ -106,6 +186,7 @@ public class PlanejamentoController {
     public ResponseEntity<PlanejamentoItem> atualizarItem(@PathVariable Long itemId, @RequestBody PlanejamentoItem dados) {
         return planejamentoItemRepository.findById(itemId)
                 .map(item -> {
+                    item.setPlanejamentoMateria(dados.getPlanejamentoMateria());
                     item.setMateria(dados.getMateria());
                     item.setAssunto(dados.getAssunto());
                     item.setMaterialTipo(dados.getMaterialTipo());

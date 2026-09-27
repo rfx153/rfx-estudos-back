@@ -67,3 +67,37 @@ ALTER TABLE planejamentos
 ALTER COLUMN materia_fk DROP NOT NULL,
 ALTER COLUMN assunto_fk DROP NOT NULL,
 ALTER COLUMN material_tipo_fk DROP NOT NULL;
+
+
+CREATE TABLE IF NOT EXISTS planejamento_materias (
+    id BIGSERIAL PRIMARY KEY,
+    planejamento_fk BIGINT NOT NULL,
+    materia_fk BIGINT NOT NULL,
+    prioridade VARCHAR(50) DEFAULT 'Media',
+    data_prevista DATE NULL,
+    status VARCHAR(50) DEFAULT 'Pendente',
+    data_finalizacao DATE NULL,
+    ordem INTEGER NULL,
+    observacoes TEXT NULL,
+    CONSTRAINT uk_planejamento_materias_planejamento_materia UNIQUE (planejamento_fk, materia_fk),
+    CONSTRAINT fk_planejamento_materias_planejamento
+        FOREIGN KEY (planejamento_fk) REFERENCES planejamentos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_planejamento_materias_materia
+        FOREIGN KEY (materia_fk) REFERENCES materias(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_planejamento_materias_planejamento
+ON planejamento_materias (planejamento_fk, ordem, id);
+
+ALTER TABLE planejamento_itens
+ADD COLUMN IF NOT EXISTS planejamento_materia_fk BIGINT;
+
+ALTER TABLE planejamento_itens
+DROP CONSTRAINT IF EXISTS fk_planejamento_itens_planejamento_materia;
+
+ALTER TABLE planejamento_itens
+ADD CONSTRAINT fk_planejamento_itens_planejamento_materia
+FOREIGN KEY (planejamento_materia_fk) REFERENCES planejamento_materias(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_planejamento_itens_planejamento_materia
+ON planejamento_itens (planejamento_materia_fk, ordem, id);

@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "planejamento_itens")
-public class PlanejamentoItem {
+@Table(
+    name = "planejamento_materias",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"planejamento_fk", "materia_fk"})
+)
+public class PlanejamentoMateria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,35 +19,14 @@ public class PlanejamentoItem {
     private Planejamento planejamento;
 
     @ManyToOne
-    @JoinColumn(name = "planejamento_materia_fk")
-    private PlanejamentoMateria planejamentoMateria;
-
-    @ManyToOne
     @JoinColumn(name = "materia_fk", nullable = false)
     private Materia materia;
-
-    @ManyToOne
-    @JoinColumn(name = "assunto_fk")
-    private Assunto assunto;
-
-    @ManyToOne
-    @JoinColumn(name = "material_tipo_fk")
-    private MaterialTipo materialTipo;
-
-    @Column(name = "material_nome", length = 255)
-    private String materialNome;
 
     @Column(length = 50)
     private String prioridade = "Media";
 
-    @Column(columnDefinition = "TEXT")
-    private String meta;
-
     @Column(name = "data_prevista")
     private LocalDate dataPrevista;
-
-    @Column(name = "link_documento", columnDefinition = "TEXT")
-    private String linkDocumento;
 
     @Column(length = 50)
     private String status = "Pendente";
@@ -58,7 +40,7 @@ public class PlanejamentoItem {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
-    public PlanejamentoItem() {}
+    public PlanejamentoMateria() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -66,32 +48,14 @@ public class PlanejamentoItem {
     public Planejamento getPlanejamento() { return planejamento; }
     public void setPlanejamento(Planejamento planejamento) { this.planejamento = planejamento; }
 
-    public PlanejamentoMateria getPlanejamentoMateria() { return planejamentoMateria; }
-    public void setPlanejamentoMateria(PlanejamentoMateria planejamentoMateria) { this.planejamentoMateria = planejamentoMateria; }
-
     public Materia getMateria() { return materia; }
     public void setMateria(Materia materia) { this.materia = materia; }
-
-    public Assunto getAssunto() { return assunto; }
-    public void setAssunto(Assunto assunto) { this.assunto = assunto; }
-
-    public MaterialTipo getMaterialTipo() { return materialTipo; }
-    public void setMaterialTipo(MaterialTipo materialTipo) { this.materialTipo = materialTipo; }
-
-    public String getMaterialNome() { return materialNome; }
-    public void setMaterialNome(String materialNome) { this.materialNome = materialNome; }
 
     public String getPrioridade() { return prioridade; }
     public void setPrioridade(String prioridade) { this.prioridade = prioridade; }
 
-    public String getMeta() { return meta; }
-    public void setMeta(String meta) { this.meta = meta; }
-
     public LocalDate getDataPrevista() { return dataPrevista; }
     public void setDataPrevista(LocalDate dataPrevista) { this.dataPrevista = dataPrevista; }
-
-    public String getLinkDocumento() { return linkDocumento; }
-    public void setLinkDocumento(String linkDocumento) { this.linkDocumento = linkDocumento; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
