@@ -13,6 +13,9 @@ public class Materia {
     @Column(nullable = false, length = 100)
     private String nome;
 
+    @Column(length = 7)
+    private String cor = "#3B82F6";
+
     @ManyToMany
     @JoinTable(
         name = "materia_categorias",
@@ -30,6 +33,9 @@ public class Materia {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public String getCor() { return cor; }
+    public void setCor(String cor) { this.cor = cor; }
 
     public java.util.Set<Categoria> getCategorias() { return categorias; }
     public void setCategorias(java.util.Set<Categoria> categorias) { this.categorias = categorias; }

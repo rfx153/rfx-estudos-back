@@ -36,6 +36,7 @@ public class MateriaController {
 
     @PostMapping
     public ResponseEntity<Materia> criar(@RequestBody Materia materia) {
+        if (materia.getCor() == null || materia.getCor().isBlank()) materia.setCor("#3B82F6");
         materia.setCategorias(categoriasExistentes(materia));
         Materia novaMateria = materiaRepository.save(materia);
         return ResponseEntity.ok(novaMateria);
@@ -46,6 +47,7 @@ public class MateriaController {
         return materiaRepository.findById(id)
                 .map(materia -> {
                     materia.setNome(dados.getNome());
+                    materia.setCor(dados.getCor());
                     materia.setCategorias(categoriasExistentes(dados));
                     return ResponseEntity.ok(materiaRepository.save(materia));
                 })

@@ -101,3 +101,5 @@ FOREIGN KEY (planejamento_materia_fk) REFERENCES planejamento_materias(id) ON DE
 
 CREATE INDEX IF NOT EXISTS idx_planejamento_itens_planejamento_materia
 ON planejamento_itens (planejamento_materia_fk, ordem, id);
+
+ALTER TABLE materias ADD COLUMN IF NOT EXISTS cor VARCHAR(7) DEFAULT '#3B82F6';
