@@ -19,6 +19,7 @@ import rfx_estudos.domain.Registro;
 import rfx_estudos.repository.RegistroRepository;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -37,7 +38,10 @@ public class RegistroController {
 
     @GetMapping("/hoje")
     public List<Registro> listarRegistrosDeHoje() {
-        return registroRepository.findByDataEstudoOrderByDataEstudoDesc(LocalDate.now());
+         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+
+    return registroRepository
+        .findByDataEstudoOrderByDataEstudoDesc(hoje);
     }
 
     @GetMapping("/total")
