@@ -11,6 +11,7 @@ import rfx_estudos.domain.Assunto;
 import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
+import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
 import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.domain.TipoRegistro;
@@ -294,6 +295,8 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
+        validarInclusaoDoItem(grupo.get(), assunto.get());
+
         PlanejamentoGrupoAssuntoItem item = new PlanejamentoGrupoAssuntoItem();
         item.setPlanejamentoGrupoAssunto(grupo.get());
         item.setAssunto(assunto.get());
@@ -324,6 +327,8 @@ public class PlanejamentoService {
                 || !assuntoPertenceAoGrupo(assunto.get(), grupo.get())) {
             return Optional.empty();
         }
+
+        validarAtualizacaoDoItem(grupo.get(), assunto.get(), id);
 
         PlanejamentoGrupoAssuntoItem existente = item.get();
         existente.setAssunto(assunto.get());
@@ -583,5 +588,47 @@ public class PlanejamentoService {
             PlanejamentoGrupoAssunto grupo) {
         return assunto.getMateria().getId().equals(
                 grupo.getPlanejamentoMateria().getMateria().getId());
+    }
+
+    private void validarInclusaoDoItem(
+            PlanejamentoGrupoAssunto grupo,
+            Assunto assunto) {
+        if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
+                && planejamentoGrupoAssuntoItemRepository
+                        .existsByPlanejamentoGrupoAssuntoId(grupo.getId())) {
+            throw new PlanejamentoConflitoException(
+                    "Um grupo do tipo ASSUNTO pode possuir somente um item");
+        }
+
+        if (planejamentoGrupoAssuntoItemRepository
+                .existsByPlanejamentoGrupoAssuntoIdAndAssuntoId(
+                        grupo.getId(),
+                        assunto.getId())) {
+            throw new PlanejamentoConflitoException(
+                    "O assunto já está cadastrado neste grupo");
+        }
+    }
+
+    private void validarAtualizacaoDoItem(
+            PlanejamentoGrupoAssunto grupo,
+            Assunto assunto,
+            Long itemId) {
+        if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
+                && planejamentoGrupoAssuntoItemRepository
+                        .existsByPlanejamentoGrupoAssuntoIdAndIdNot(
+                                grupo.getId(),
+                                itemId)) {
+            throw new PlanejamentoConflitoException(
+                    "Um grupo do tipo ASSUNTO pode possuir somente um item");
+        }
+
+        if (planejamentoGrupoAssuntoItemRepository
+                .existsByPlanejamentoGrupoAssuntoIdAndAssuntoIdAndIdNot(
+                        grupo.getId(),
+                        assunto.getId(),
+                        itemId)) {
+            throw new PlanejamentoConflitoException(
+                    "O assunto já está cadastrado neste grupo");
+        }
     }
 }

@@ -4,9 +4,11 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,6 +28,7 @@ import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.service.PlanejamentoService;
+import rfx_estudos.service.PlanejamentoConflitoException;
 
 @RestController
 @RequestMapping("/api/planejamentos")
@@ -456,5 +459,13 @@ public class PlanejamentoController {
 
         return Boolean.TRUE.equals(dados.getConcluidaManualmente())
                 && !Boolean.TRUE.equals(dados.getConcluida());
+    }
+
+    @ExceptionHandler({
+            PlanejamentoConflitoException.class,
+            DataIntegrityViolationException.class
+    })
+    public ResponseEntity<Void> tratarConflito() {
+        return ResponseEntity.status(409).build();
     }
 }

@@ -11,6 +11,7 @@ import rfx_estudos.domain.Registro;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RegistroRepository extends JpaRepository<Registro, Long> {
@@ -29,7 +30,8 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "assunto",
             "materialTipo",
             "planejamento",
-            "tipoRegistro"
+            "tipoRegistro",
+            "planejamentoEtapa"
     })
     @Query("select r from Registro r")
     Page<Registro> buscarHistorico(Pageable pageable);
@@ -39,8 +41,12 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "assunto",
             "materialTipo",
             "planejamento",
-            "tipoRegistro"
+            "tipoRegistro",
+            "planejamentoEtapa"
     })
     @Query("select r from Registro r where r.materia.id = :materiaId")
     Page<Registro> buscarHistoricoPorMateria(@Param("materiaId") Long materiaId, Pageable pageable);
+
+    Optional<Registro> findFirstByPlanejamentoEtapaIdAndConcluidoTrueOrderByDataEstudoDescIdDesc(
+            Long planejamentoEtapaId);
 }

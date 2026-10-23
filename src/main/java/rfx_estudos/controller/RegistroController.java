@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rfx_estudos.domain.Registro;
 import rfx_estudos.repository.RegistroRepository;
+import rfx_estudos.service.RegistroService;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -29,6 +30,9 @@ public class RegistroController {
 
     @Autowired
     private RegistroRepository registroRepository;
+
+    @Autowired
+    private RegistroService registroService;
 
     // Rota: http://localhost:8080/api/registros (Listar histórico completo ordenado por data)
     @GetMapping
@@ -74,40 +78,25 @@ public class RegistroController {
 
     // Rota: http://localhost:8080/api/registros (Salvar uma nova sessão realizada)
     @PostMapping
-    public Registro salvarSessao(@RequestBody Registro novoRegistro) {
-        return registroRepository.save(novoRegistro);
+    public ResponseEntity<Registro> salvarSessao(@RequestBody Registro novoRegistro) {
+        return registroService.criar(novoRegistro)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.badRequest().build());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Registro> atualizar(@PathVariable Long id, @RequestBody Registro registroAtualizado) {
-        return registroRepository.findById(id)
-                .map(registro -> {
-                    registro.setMateria(registroAtualizado.getMateria());
-                    registro.setAssunto(registroAtualizado.getAssunto());
-                    registro.setMaterialTipo(registroAtualizado.getMaterialTipo());
-                    registro.setPlanejamento(registroAtualizado.getPlanejamento());
-                    registro.setTipoRegistro(registroAtualizado.getTipoRegistro());
-                    registro.setMaterialNome(registroAtualizado.getMaterialNome());
-                    registro.setPuntoParada(registroAtualizado.getPuntoParada());
-                    registro.setQuestoesFeitas(registroAtualizado.getQuestoesFeitas());
-                    registro.setQuestoesAcertadas(registroAtualizado.getQuestoesAcertadas());
-                    registro.setDataEstudo(registroAtualizado.getDataEstudo());
-                    registro.setTempoEstudado(registroAtualizado.getTempoEstudado());
-                    registro.setLinkDocumento(registroAtualizado.getLinkDocumento());
-                    registro.setObservacoes(registroAtualizado.getObservacoes());
-
-                    return ResponseEntity.ok(registroRepository.save(registro));
-                })
+        return registroService.atualizar(id, registroAtualizado)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (!registroRepository.existsById(id)) {
+        if (!registroService.excluir(id)) {
             return ResponseEntity.notFound().build();
         }
 
-        registroRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

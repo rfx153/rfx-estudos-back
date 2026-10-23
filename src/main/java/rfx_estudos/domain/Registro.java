@@ -33,6 +33,13 @@ public class Registro {
     @JoinColumn(name = "tipo_registro_fk")
     private TipoRegistro tipoRegistro;
 
+    @Column(nullable = false)
+    private Boolean concluido = false;
+
+    @ManyToOne
+    @JoinColumn(name = "planejamento_etapa_fk")
+    private PlanejamentoItemEtapa planejamentoEtapa;
+
     @Column(name = "material_nome", length = 255)
     private String materialNome;
 
@@ -79,6 +86,14 @@ public class Registro {
 
     public TipoRegistro getTipoRegistro() { return tipoRegistro; }
     public void setTipoRegistro(TipoRegistro tipoRegistro) { this.tipoRegistro = tipoRegistro; }
+
+    public Boolean getConcluido() { return concluido; }
+    public void setConcluido(Boolean concluido) { this.concluido = concluido; }
+
+    public PlanejamentoItemEtapa getPlanejamentoEtapa() { return planejamentoEtapa; }
+    public void setPlanejamentoEtapa(PlanejamentoItemEtapa planejamentoEtapa) {
+        this.planejamentoEtapa = planejamentoEtapa;
+    }
 
     public String getMaterialNome() { return materialNome; }
     public void setMaterialNome(String materialNome) { this.materialNome = materialNome; }
