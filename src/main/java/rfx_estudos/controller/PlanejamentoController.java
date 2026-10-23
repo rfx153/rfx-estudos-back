@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import rfx_estudos.domain.Planejamento;
+import rfx_estudos.domain.PlanejamentoGrupoAssunto;
+import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
 import rfx_estudos.domain.PlanejamentoMateria;
+import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.service.PlanejamentoService;
 
@@ -131,8 +134,102 @@ public class PlanejamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos")
+    public ResponseEntity<List<PlanejamentoGrupoAssunto>> listarGrupos(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId) {
+        return planejamentoService.listarGrupos(planejamentoId, planejamentoMateriaId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{id}")
+    public ResponseEntity<PlanejamentoGrupoAssunto> buscarGrupo(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long id) {
+        return planejamentoService.buscarGrupo(planejamentoId, planejamentoMateriaId, id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos")
+    public ResponseEntity<PlanejamentoGrupoAssunto> adicionarGrupo(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @RequestBody PlanejamentoGrupoAssuntoDTO dados) {
+        if (dadosGrupoInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.adicionarGrupo(planejamentoId, planejamentoMateriaId, dados)
+                .map(grupo -> {
+                    URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
+                            .path("/{id}")
+                            .buildAndExpand(grupo.getId())
+                            .toUri();
+                    return ResponseEntity.created(localizacao).body(grupo);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{id}")
+    public ResponseEntity<PlanejamentoGrupoAssunto> atualizarGrupo(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long id,
+            @RequestBody PlanejamentoGrupoAssuntoDTO dados) {
+        if (dadosGrupoInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.atualizarGrupo(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        id,
+                        dados)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{id}")
+    public ResponseEntity<Void> excluirGrupo(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long id) {
+        if (!planejamentoService.excluirGrupo(planejamentoId, planejamentoMateriaId, id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
     private boolean dadosMateriaInvalidos(PlanejamentoMateriaDTO dados) {
         if (dados.getMateriaId() == null) {
+            return true;
+        }
+
+        if (dados.getPeso() != null && (dados.getPeso() < 1 || dados.getPeso() > 5)) {
+            return true;
+        }
+
+        return dados.getOrdem() != null && dados.getOrdem() <= 0;
+    }
+
+    private boolean dadosGrupoInvalidos(PlanejamentoGrupoAssuntoDTO dados) {
+        if (dados.getTipo() == null) {
+            return true;
+        }
+
+        if (dados.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
+                && dados.getNome() != null) {
+            return true;
+        }
+
+        if (dados.getTipo() == PlanejamentoGrupoAssuntoTipo.BLOCO
+                && (dados.getNome() == null
+                        || dados.getNome().isBlank()
+                        || dados.getNome().length() > 150)) {
             return true;
         }
 

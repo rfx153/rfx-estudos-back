@@ -8,9 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import rfx_estudos.domain.Materia;
 import rfx_estudos.domain.Planejamento;
+import rfx_estudos.domain.PlanejamentoGrupoAssunto;
 import rfx_estudos.domain.PlanejamentoMateria;
+import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.repository.MateriaRepository;
+import rfx_estudos.repository.PlanejamentoGrupoAssuntoRepository;
 import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
 
@@ -19,14 +22,17 @@ public class PlanejamentoService {
 
     private final PlanejamentoRepository planejamentoRepository;
     private final PlanejamentoMateriaRepository planejamentoMateriaRepository;
+    private final PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository;
     private final MateriaRepository materiaRepository;
 
     public PlanejamentoService(
             PlanejamentoRepository planejamentoRepository,
             PlanejamentoMateriaRepository planejamentoMateriaRepository,
+            PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository,
             MateriaRepository materiaRepository) {
         this.planejamentoRepository = planejamentoRepository;
         this.planejamentoMateriaRepository = planejamentoMateriaRepository;
+        this.planejamentoGrupoAssuntoRepository = planejamentoGrupoAssuntoRepository;
         this.materiaRepository = materiaRepository;
     }
 
@@ -130,6 +136,90 @@ public class PlanejamentoService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoGrupoAssunto>> listarGrupos(
+            Long planejamentoId,
+            Long planejamentoMateriaId) {
+        Optional<PlanejamentoMateria> planejamentoMateria = buscarPlanejamentoMateria(
+                planejamentoId,
+                planejamentoMateriaId);
+
+        if (planejamentoMateria.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                planejamentoGrupoAssuntoRepository
+                        .findByPlanejamentoMateriaIdOrderByOrdemAsc(planejamentoMateriaId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoGrupoAssunto> buscarGrupo(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long id) {
+        if (buscarPlanejamentoMateria(planejamentoId, planejamentoMateriaId).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return planejamentoGrupoAssuntoRepository.findByIdAndPlanejamentoMateriaId(
+                id,
+                planejamentoMateriaId);
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoAssunto> adicionarGrupo(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            PlanejamentoGrupoAssuntoDTO dados) {
+        Optional<PlanejamentoMateria> planejamentoMateria = buscarPlanejamentoMateria(
+                planejamentoId,
+                planejamentoMateriaId);
+
+        if (planejamentoMateria.isEmpty()) {
+            return Optional.empty();
+        }
+
+        PlanejamentoGrupoAssunto grupo = new PlanejamentoGrupoAssunto();
+        grupo.setPlanejamentoMateria(planejamentoMateria.get());
+        atualizarCampos(grupo, dados);
+
+        return Optional.of(planejamentoGrupoAssuntoRepository.save(grupo));
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoAssunto> atualizarGrupo(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long id,
+            PlanejamentoGrupoAssuntoDTO dados) {
+        if (buscarPlanejamentoMateria(planejamentoId, planejamentoMateriaId).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return planejamentoGrupoAssuntoRepository
+                .findByIdAndPlanejamentoMateriaId(id, planejamentoMateriaId)
+                .map(grupo -> {
+                    atualizarCampos(grupo, dados);
+                    return planejamentoGrupoAssuntoRepository.save(grupo);
+                });
+    }
+
+    @Transactional
+    public boolean excluirGrupo(Long planejamentoId, Long planejamentoMateriaId, Long id) {
+        if (buscarPlanejamentoMateria(planejamentoId, planejamentoMateriaId).isEmpty()) {
+            return false;
+        }
+
+        return planejamentoGrupoAssuntoRepository
+                .findByIdAndPlanejamentoMateriaId(id, planejamentoMateriaId)
+                .map(grupo -> {
+                    planejamentoGrupoAssuntoRepository.delete(grupo);
+                    return true;
+                })
+                .orElse(false);
+    }
+
     private void atualizarCampos(
             PlanejamentoMateria planejamentoMateria,
             PlanejamentoMateriaDTO dados) {
@@ -138,6 +228,26 @@ public class PlanejamentoService {
         planejamentoMateria.setDataFinalizarPrevista(dados.getDataFinalizarPrevista());
         planejamentoMateria.setDataFinalizado(dados.getDataFinalizado());
         planejamentoMateria.setObservacoes(dados.getObservacoes());
+    }
+
+    private void atualizarCampos(
+            PlanejamentoGrupoAssunto grupo,
+            PlanejamentoGrupoAssuntoDTO dados) {
+        grupo.setTipo(dados.getTipo());
+        grupo.setNome(dados.getNome());
+        grupo.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        grupo.setOrdem(dados.getOrdem());
+        grupo.setDataPrevista(dados.getDataPrevista());
+        grupo.setDataFinalizada(dados.getDataFinalizada());
+        grupo.setObservacoes(dados.getObservacoes());
+    }
+
+    private Optional<PlanejamentoMateria> buscarPlanejamentoMateria(
+            Long planejamentoId,
+            Long planejamentoMateriaId) {
+        return planejamentoMateriaRepository.findByIdAndPlanejamentoId(
+                planejamentoMateriaId,
+                planejamentoId);
     }
 
     private Optional<Materia> buscarMateriaPorId(Long materiaId) {
