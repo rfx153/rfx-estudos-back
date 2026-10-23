@@ -13,6 +13,9 @@ public class Planejamento {
     @Column(nullable = false, length = 150, unique = true)
     private String nome;
 
+    @Column(columnDefinition = "TEXT")
+    private String descricao;
+
     public Planejamento() {}
 
     public Long getId() { return id; }
@@ -20,4 +23,7 @@ public class Planejamento {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
 }
