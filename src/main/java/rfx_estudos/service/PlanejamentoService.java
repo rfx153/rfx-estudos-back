@@ -6,16 +6,28 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import rfx_estudos.domain.Materia;
 import rfx_estudos.domain.Planejamento;
+import rfx_estudos.domain.PlanejamentoMateria;
+import rfx_estudos.dto.PlanejamentoMateriaDTO;
+import rfx_estudos.repository.MateriaRepository;
+import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
 
 @Service
 public class PlanejamentoService {
 
     private final PlanejamentoRepository planejamentoRepository;
+    private final PlanejamentoMateriaRepository planejamentoMateriaRepository;
+    private final MateriaRepository materiaRepository;
 
-    public PlanejamentoService(PlanejamentoRepository planejamentoRepository) {
+    public PlanejamentoService(
+            PlanejamentoRepository planejamentoRepository,
+            PlanejamentoMateriaRepository planejamentoMateriaRepository,
+            MateriaRepository materiaRepository) {
         this.planejamentoRepository = planejamentoRepository;
+        this.planejamentoMateriaRepository = planejamentoMateriaRepository;
+        this.materiaRepository = materiaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -52,5 +64,87 @@ public class PlanejamentoService {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoMateria>> listarMaterias(Long planejamentoId) {
+        if (!planejamentoRepository.existsById(planejamentoId)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                planejamentoMateriaRepository.findByPlanejamentoIdOrderByOrdemAsc(planejamentoId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoMateria> buscarMateria(Long planejamentoId, Long id) {
+        return planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
+    }
+
+    @Transactional
+    public Optional<PlanejamentoMateria> adicionarMateria(
+            Long planejamentoId,
+            PlanejamentoMateriaDTO dados) {
+        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
+        Optional<Materia> materia = buscarMateriaPorId(dados.getMateriaId());
+
+        if (planejamento.isEmpty() || materia.isEmpty()) {
+            return Optional.empty();
+        }
+
+        PlanejamentoMateria planejamentoMateria = new PlanejamentoMateria();
+        planejamentoMateria.setPlanejamento(planejamento.get());
+        planejamentoMateria.setMateria(materia.get());
+        atualizarCampos(planejamentoMateria, dados);
+
+        return Optional.of(planejamentoMateriaRepository.save(planejamentoMateria));
+    }
+
+    @Transactional
+    public Optional<PlanejamentoMateria> atualizarMateria(
+            Long planejamentoId,
+            Long id,
+            PlanejamentoMateriaDTO dados) {
+        Optional<PlanejamentoMateria> planejamentoMateria =
+                planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
+        Optional<Materia> materia = buscarMateriaPorId(dados.getMateriaId());
+
+        if (planejamentoMateria.isEmpty() || materia.isEmpty()) {
+            return Optional.empty();
+        }
+
+        PlanejamentoMateria existente = planejamentoMateria.get();
+        existente.setMateria(materia.get());
+        atualizarCampos(existente, dados);
+
+        return Optional.of(planejamentoMateriaRepository.save(existente));
+    }
+
+    @Transactional
+    public boolean excluirMateria(Long planejamentoId, Long id) {
+        return planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
+                .map(planejamentoMateria -> {
+                    planejamentoMateriaRepository.delete(planejamentoMateria);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    private void atualizarCampos(
+            PlanejamentoMateria planejamentoMateria,
+            PlanejamentoMateriaDTO dados) {
+        planejamentoMateria.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        planejamentoMateria.setOrdem(dados.getOrdem());
+        planejamentoMateria.setDataFinalizarPrevista(dados.getDataFinalizarPrevista());
+        planejamentoMateria.setDataFinalizado(dados.getDataFinalizado());
+        planejamentoMateria.setObservacoes(dados.getObservacoes());
+    }
+
+    private Optional<Materia> buscarMateriaPorId(Long materiaId) {
+        if (materiaId == null) {
+            return Optional.empty();
+        }
+
+        return materiaRepository.findById(materiaId);
     }
 }
