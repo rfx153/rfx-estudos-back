@@ -19,9 +19,11 @@ import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
+import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
+import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.service.PlanejamentoService;
 
@@ -294,6 +296,107 @@ public class PlanejamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{itemId}/etapas")
+    public ResponseEntity<List<PlanejamentoItemEtapa>> listarEtapas(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long itemId) {
+        return planejamentoService.listarEtapas(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        itemId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{itemId}/etapas/{id}")
+    public ResponseEntity<PlanejamentoItemEtapa> buscarEtapa(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long itemId,
+            @PathVariable Long id) {
+        return planejamentoService.buscarEtapa(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        itemId,
+                        id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{itemId}/etapas")
+    public ResponseEntity<PlanejamentoItemEtapa> adicionarEtapa(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long itemId,
+            @RequestBody PlanejamentoItemEtapaDTO dados) {
+        if (dadosEtapaInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.adicionarEtapa(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        itemId,
+                        dados)
+                .map(etapa -> {
+                    URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
+                            .path("/{id}")
+                            .buildAndExpand(etapa.getId())
+                            .toUri();
+                    return ResponseEntity.created(localizacao).body(etapa);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{itemId}/etapas/{id}")
+    public ResponseEntity<PlanejamentoItemEtapa> atualizarEtapa(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long itemId,
+            @PathVariable Long id,
+            @RequestBody PlanejamentoItemEtapaDTO dados) {
+        if (dadosEtapaInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.atualizarEtapa(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        itemId,
+                        id,
+                        dados)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{itemId}/etapas/{id}")
+    public ResponseEntity<Void> excluirEtapa(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long itemId,
+            @PathVariable Long id) {
+        if (!planejamentoService.excluirEtapa(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId,
+                itemId,
+                id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
     private boolean dadosMateriaInvalidos(PlanejamentoMateriaDTO dados) {
         if (dados.getMateriaId() == null) {
             return true;
@@ -340,5 +443,18 @@ public class PlanejamentoController {
         }
 
         return dados.getOrdem() != null && dados.getOrdem() <= 0;
+    }
+
+    private boolean dadosEtapaInvalidos(PlanejamentoItemEtapaDTO dados) {
+        if (dados.getTipoRegistroId() == null) {
+            return true;
+        }
+
+        if (dados.getOrdem() != null && dados.getOrdem() <= 0) {
+            return true;
+        }
+
+        return Boolean.TRUE.equals(dados.getConcluidaManualmente())
+                && !Boolean.TRUE.equals(dados.getConcluida());
     }
 }
