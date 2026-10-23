@@ -223,6 +223,7 @@ public class PlanejamentoService {
         return planejamentoGrupoAssuntoRepository
                 .findByIdAndPlanejamentoMateriaId(id, planejamentoMateriaId)
                 .map(grupo -> {
+                    validarAlteracaoDoTipoDoGrupo(grupo, dados);
                     atualizarCampos(grupo, dados);
                     return planejamentoGrupoAssuntoRepository.save(grupo);
                 });
@@ -629,6 +630,22 @@ public class PlanejamentoService {
                         itemId)) {
             throw new PlanejamentoConflitoException(
                     "O assunto já está cadastrado neste grupo");
+        }
+    }
+
+    private void validarAlteracaoDoTipoDoGrupo(
+            PlanejamentoGrupoAssunto grupo,
+            PlanejamentoGrupoAssuntoDTO dados) {
+        if (dados.getTipo() != PlanejamentoGrupoAssuntoTipo.ASSUNTO) {
+            return;
+        }
+
+        long quantidadeDeItens = planejamentoGrupoAssuntoItemRepository
+                .countByPlanejamentoGrupoAssuntoId(grupo.getId());
+
+        if (quantidadeDeItens > 1) {
+            throw new PlanejamentoConflitoException(
+                    "Um grupo do tipo ASSUNTO pode possuir somente um item");
         }
     }
 }

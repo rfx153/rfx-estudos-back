@@ -31,4 +31,6 @@ public interface PlanejamentoGrupoAssuntoItemRepository
             Long planejamentoGrupoAssuntoId,
             Long assuntoId,
             Long id);
+
+    long countByPlanejamentoGrupoAssuntoId(Long planejamentoGrupoAssuntoId);
 }
