@@ -7,12 +7,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import rfx_estudos.domain.Materia;
+import rfx_estudos.domain.Assunto;
 import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
+import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
+import rfx_estudos.repository.AssuntoRepository;
 import rfx_estudos.repository.MateriaRepository;
+import rfx_estudos.repository.PlanejamentoGrupoAssuntoItemRepository;
 import rfx_estudos.repository.PlanejamentoGrupoAssuntoRepository;
 import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
@@ -23,17 +28,23 @@ public class PlanejamentoService {
     private final PlanejamentoRepository planejamentoRepository;
     private final PlanejamentoMateriaRepository planejamentoMateriaRepository;
     private final PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository;
+    private final PlanejamentoGrupoAssuntoItemRepository planejamentoGrupoAssuntoItemRepository;
     private final MateriaRepository materiaRepository;
+    private final AssuntoRepository assuntoRepository;
 
     public PlanejamentoService(
             PlanejamentoRepository planejamentoRepository,
             PlanejamentoMateriaRepository planejamentoMateriaRepository,
             PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository,
-            MateriaRepository materiaRepository) {
+            PlanejamentoGrupoAssuntoItemRepository planejamentoGrupoAssuntoItemRepository,
+            MateriaRepository materiaRepository,
+            AssuntoRepository assuntoRepository) {
         this.planejamentoRepository = planejamentoRepository;
         this.planejamentoMateriaRepository = planejamentoMateriaRepository;
         this.planejamentoGrupoAssuntoRepository = planejamentoGrupoAssuntoRepository;
+        this.planejamentoGrupoAssuntoItemRepository = planejamentoGrupoAssuntoItemRepository;
         this.materiaRepository = materiaRepository;
+        this.assuntoRepository = assuntoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -220,6 +231,118 @@ public class PlanejamentoService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoGrupoAssuntoItem>> listarItens(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId) {
+        if (buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                planejamentoGrupoAssuntoItemRepository
+                        .findByPlanejamentoGrupoAssuntoIdOrderByOrdemAsc(grupoId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoGrupoAssuntoItem> buscarItem(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId,
+            Long id) {
+        if (buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return planejamentoGrupoAssuntoItemRepository
+                .findByIdAndPlanejamentoGrupoAssuntoId(id, grupoId);
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoAssuntoItem> adicionarItem(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId,
+            PlanejamentoGrupoAssuntoItemDTO dados) {
+        Optional<PlanejamentoGrupoAssunto> grupo = buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId);
+        Optional<Assunto> assunto = buscarAssuntoPorId(dados.getAssuntoId());
+
+        if (grupo.isEmpty()
+                || assunto.isEmpty()
+                || !assuntoPertenceAoGrupo(assunto.get(), grupo.get())) {
+            return Optional.empty();
+        }
+
+        PlanejamentoGrupoAssuntoItem item = new PlanejamentoGrupoAssuntoItem();
+        item.setPlanejamentoGrupoAssunto(grupo.get());
+        item.setAssunto(assunto.get());
+        atualizarCampos(item, dados);
+
+        return Optional.of(planejamentoGrupoAssuntoItemRepository.save(item));
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoAssuntoItem> atualizarItem(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId,
+            Long id,
+            PlanejamentoGrupoAssuntoItemDTO dados) {
+        Optional<PlanejamentoGrupoAssunto> grupo = buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId);
+        Optional<PlanejamentoGrupoAssuntoItem> item =
+                planejamentoGrupoAssuntoItemRepository
+                        .findByIdAndPlanejamentoGrupoAssuntoId(id, grupoId);
+        Optional<Assunto> assunto = buscarAssuntoPorId(dados.getAssuntoId());
+
+        if (grupo.isEmpty()
+                || item.isEmpty()
+                || assunto.isEmpty()
+                || !assuntoPertenceAoGrupo(assunto.get(), grupo.get())) {
+            return Optional.empty();
+        }
+
+        PlanejamentoGrupoAssuntoItem existente = item.get();
+        existente.setAssunto(assunto.get());
+        atualizarCampos(existente, dados);
+
+        return Optional.of(planejamentoGrupoAssuntoItemRepository.save(existente));
+    }
+
+    @Transactional
+    public boolean excluirItem(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId,
+            Long id) {
+        if (buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId).isEmpty()) {
+            return false;
+        }
+
+        return planejamentoGrupoAssuntoItemRepository
+                .findByIdAndPlanejamentoGrupoAssuntoId(id, grupoId)
+                .map(item -> {
+                    planejamentoGrupoAssuntoItemRepository.delete(item);
+                    return true;
+                })
+                .orElse(false);
+    }
+
     private void atualizarCampos(
             PlanejamentoMateria planejamentoMateria,
             PlanejamentoMateriaDTO dados) {
@@ -242,6 +365,15 @@ public class PlanejamentoService {
         grupo.setObservacoes(dados.getObservacoes());
     }
 
+    private void atualizarCampos(
+            PlanejamentoGrupoAssuntoItem item,
+            PlanejamentoGrupoAssuntoItemDTO dados) {
+        item.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        item.setOrdem(dados.getOrdem());
+        item.setDataPrevista(dados.getDataPrevista());
+        item.setObservacoes(dados.getObservacoes());
+    }
+
     private Optional<PlanejamentoMateria> buscarPlanejamentoMateria(
             Long planejamentoId,
             Long planejamentoMateriaId) {
@@ -250,11 +382,39 @@ public class PlanejamentoService {
                 planejamentoId);
     }
 
+    private Optional<PlanejamentoGrupoAssunto> buscarPlanejamentoGrupoAssunto(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId) {
+        if (buscarPlanejamentoMateria(planejamentoId, planejamentoMateriaId).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return planejamentoGrupoAssuntoRepository.findByIdAndPlanejamentoMateriaId(
+                grupoId,
+                planejamentoMateriaId);
+    }
+
     private Optional<Materia> buscarMateriaPorId(Long materiaId) {
         if (materiaId == null) {
             return Optional.empty();
         }
 
         return materiaRepository.findById(materiaId);
+    }
+
+    private Optional<Assunto> buscarAssuntoPorId(Long assuntoId) {
+        if (assuntoId == null) {
+            return Optional.empty();
+        }
+
+        return assuntoRepository.findById(assuntoId);
+    }
+
+    private boolean assuntoPertenceAoGrupo(
+            Assunto assunto,
+            PlanejamentoGrupoAssunto grupo) {
+        return assunto.getMateria().getId().equals(
+                grupo.getPlanejamentoMateria().getMateria().getId());
     }
 }

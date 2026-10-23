@@ -17,9 +17,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
+import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.service.PlanejamentoService;
 
@@ -204,6 +206,94 @@ public class PlanejamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens")
+    public ResponseEntity<List<PlanejamentoGrupoAssuntoItem>> listarItens(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId) {
+        return planejamentoService.listarItens(planejamentoId, planejamentoMateriaId, grupoId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{id}")
+    public ResponseEntity<PlanejamentoGrupoAssuntoItem> buscarItem(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long id) {
+        return planejamentoService.buscarItem(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens")
+    public ResponseEntity<PlanejamentoGrupoAssuntoItem> adicionarItem(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @RequestBody PlanejamentoGrupoAssuntoItemDTO dados) {
+        if (dadosItemInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.adicionarItem(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        dados)
+                .map(item -> {
+                    URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
+                            .path("/{id}")
+                            .buildAndExpand(item.getId())
+                            .toUri();
+                    return ResponseEntity.created(localizacao).body(item);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{id}")
+    public ResponseEntity<PlanejamentoGrupoAssuntoItem> atualizarItem(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long id,
+            @RequestBody PlanejamentoGrupoAssuntoItemDTO dados) {
+        if (dadosItemInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.atualizarItem(
+                        planejamentoId,
+                        planejamentoMateriaId,
+                        grupoId,
+                        id,
+                        dados)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{id}")
+    public ResponseEntity<Void> excluirItem(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @PathVariable Long id) {
+        if (!planejamentoService.excluirItem(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId,
+                id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
     private boolean dadosMateriaInvalidos(PlanejamentoMateriaDTO dados) {
         if (dados.getMateriaId() == null) {
             return true;
@@ -230,6 +320,18 @@ public class PlanejamentoController {
                 && (dados.getNome() == null
                         || dados.getNome().isBlank()
                         || dados.getNome().length() > 150)) {
+            return true;
+        }
+
+        if (dados.getPeso() != null && (dados.getPeso() < 1 || dados.getPeso() > 5)) {
+            return true;
+        }
+
+        return dados.getOrdem() != null && dados.getOrdem() <= 0;
+    }
+
+    private boolean dadosItemInvalidos(PlanejamentoGrupoAssuntoItemDTO dados) {
+        if (dados.getAssuntoId() == null) {
             return true;
         }
 
