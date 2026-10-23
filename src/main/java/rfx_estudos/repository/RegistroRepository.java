@@ -29,8 +29,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "assunto",
             "materialTipo",
             "planejamento",
-            "tipoRegistro",
-            "revisaoAssunto"
+            "tipoRegistro"
     })
     @Query("select r from Registro r")
     Page<Registro> buscarHistorico(Pageable pageable);
@@ -40,8 +39,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "assunto",
             "materialTipo",
             "planejamento",
-            "tipoRegistro",
-            "revisaoAssunto"
+            "tipoRegistro"
     })
     @Query("select r from Registro r where r.materia.id = :materiaId")
     Page<Registro> buscarHistoricoPorMateria(@Param("materiaId") Long materiaId, Pageable pageable);

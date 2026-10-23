@@ -45,14 +45,6 @@ public class Registro {
     @Column(name = "questoes_acertadas")
     private Integer questoesAcertadas = 0;
 
-    // Campos focados em Revisão
-    @ManyToOne
-    @JoinColumn(name = "revisao_fk_assunto")
-    private Assunto revisaoAssunto;
-
-    @Column(name = "revisao_complemento", columnDefinition = "TEXT")
-    private String revisaoComplemento;
-
     // Campos de Controle da Sessão
     @Column(name = "data_estudo", nullable = false)
     private LocalDate dataEstudo = LocalDate.now();
@@ -65,12 +57,6 @@ public class Registro {
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
-
-    @Column(name = "questoes_revisao_feitas")
-    private Integer questoesRevisaoFeitas = 0;
-
-    @Column(name = "questoes_revisao_acertadas")
-    private Integer questoesRevisaoAcertadas = 0;
 
     // Construtor Padrão
     public Registro() {}
@@ -106,12 +92,6 @@ public class Registro {
     public Integer getQuestoesAcertadas() { return questoesAcertadas; }
     public void setQuestoesAcertadas(Integer questoesAcertadas) { this.questoesAcertadas = questoesAcertadas; }
 
-    public Assunto getRevisaoAssunto() { return revisaoAssunto; }
-    public void setRevisaoAssunto(Assunto revisaoAssunto) { this.revisaoAssunto = revisaoAssunto; }
-
-    public String getRevisaoComplemento() { return revisaoComplemento; }
-    public void setRevisaoComplemento(String revisaoComplemento) { this.revisaoComplemento = revisaoComplemento; }
-
     public LocalDate getDataEstudo() { return dataEstudo; }
     public void setDataEstudo(LocalDate dataEstudo) { this.dataEstudo = dataEstudo; }
 
@@ -123,19 +103,4 @@ public class Registro {
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
-    public Integer getQuestoesRevisaoFeitas() {
-    return questoesRevisaoFeitas;
-    }
-
-    public void setQuestoesRevisaoFeitas(Integer questoesRevisaoFeitas) {
-        this.questoesRevisaoFeitas = questoesRevisaoFeitas;
-    }
-
-    public Integer getQuestoesRevisaoAcertadas() {
-        return questoesRevisaoAcertadas;
-    }
-
-    public void setQuestoesRevisaoAcertadas(Integer questoesRevisaoAcertadas) {
-        this.questoesRevisaoAcertadas = questoesRevisaoAcertadas;
-    }
 }

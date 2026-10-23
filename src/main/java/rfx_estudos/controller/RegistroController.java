@@ -91,14 +91,10 @@ public class RegistroController {
                     registro.setPuntoParada(registroAtualizado.getPuntoParada());
                     registro.setQuestoesFeitas(registroAtualizado.getQuestoesFeitas());
                     registro.setQuestoesAcertadas(registroAtualizado.getQuestoesAcertadas());
-                    registro.setRevisaoAssunto(registroAtualizado.getRevisaoAssunto());
-                    registro.setRevisaoComplemento(registroAtualizado.getRevisaoComplemento());
                     registro.setDataEstudo(registroAtualizado.getDataEstudo());
                     registro.setTempoEstudado(registroAtualizado.getTempoEstudado());
                     registro.setLinkDocumento(registroAtualizado.getLinkDocumento());
                     registro.setObservacoes(registroAtualizado.getObservacoes());
-                    registro.setQuestoesRevisaoFeitas(registroAtualizado.getQuestoesRevisaoFeitas());
-                    registro.setQuestoesRevisaoAcertadas(registroAtualizado.getQuestoesRevisaoAcertadas());
 
                     return ResponseEntity.ok(registroRepository.save(registro));
                 })
