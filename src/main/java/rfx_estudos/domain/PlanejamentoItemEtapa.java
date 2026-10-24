@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "planejamento_item_etapas")
@@ -43,6 +44,9 @@ public class PlanejamentoItemEtapa {
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
+
+    @Transient
+    private Boolean iniciada = false;
 
     public PlanejamentoItemEtapa() {}
 
@@ -80,4 +84,7 @@ public class PlanejamentoItemEtapa {
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
+
+    public Boolean getIniciada() { return iniciada; }
+    public void setIniciada(Boolean iniciada) { this.iniciada = iniciada; }
 }

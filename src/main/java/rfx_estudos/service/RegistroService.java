@@ -1,5 +1,6 @@
 package rfx_estudos.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,7 +37,10 @@ public class RegistroService {
         registro.setPlanejamentoEtapa(etapaInformada.etapa());
 
         Registro criado = registroRepository.saveAndFlush(registro);
-        sincronizarEtapa(idEtapa(criado));
+        concluirEtapaSeSolicitado(
+                etapaInformada.etapa(),
+                Boolean.TRUE.equals(criado.getConcluido()),
+                criado.getDataEstudo());
         return Optional.of(criado);
     }
 
@@ -50,8 +54,6 @@ public class RegistroService {
         }
 
         Registro registro = registroExistente.get();
-        Long etapaAnteriorId = idEtapa(registro);
-
         registro.setMateria(dados.getMateria());
         registro.setAssunto(dados.getAssunto());
         registro.setMaterialTipo(dados.getMaterialTipo());
@@ -70,13 +72,10 @@ public class RegistroService {
         registro.setObservacoes(dados.getObservacoes());
 
         Registro atualizado = registroRepository.saveAndFlush(registro);
-        Long etapaNovaId = idEtapa(atualizado);
-        sincronizarEtapa(etapaAnteriorId);
-
-        if (etapaNovaId != null && !etapaNovaId.equals(etapaAnteriorId)) {
-            sincronizarEtapa(etapaNovaId);
-        }
-
+        concluirEtapaSeSolicitado(
+                etapaNova.etapa(),
+                Boolean.TRUE.equals(atualizado.getConcluido()),
+                atualizado.getDataEstudo());
         return Optional.of(atualizado);
     }
 
@@ -87,10 +86,8 @@ public class RegistroService {
             return false;
         }
 
-        Long etapaId = idEtapa(registro.get());
         registroRepository.delete(registro.get());
         registroRepository.flush();
-        sincronizarEtapa(etapaId);
         return true;
     }
 
@@ -117,41 +114,28 @@ public class RegistroService {
                         assuntoId,
                         tipoRegistroId);
 
-        if (etapas.size() != 1) {
+        if (etapas.isEmpty()) {
+            return new EtapaInformada(true, null);
+        }
+
+        if (etapas.size() > 1) {
             return new EtapaInformada(false, null);
         }
 
         return new EtapaInformada(true, etapas.get(0));
     }
 
-    private void sincronizarEtapa(Long etapaId) {
-        if (etapaId == null) {
+    private void concluirEtapaSeSolicitado(
+            PlanejamentoItemEtapa etapa,
+            boolean sessaoConcluida,
+            LocalDate dataConclusao) {
+        if (etapa == null || !sessaoConcluida || Boolean.TRUE.equals(etapa.getConcluida())) {
             return;
         }
 
-        planejamentoItemEtapaRepository.findById(etapaId).ifPresent(etapa -> {
-            Optional<Registro> ultimoRegistroConcluido = registroRepository
-                    .findFirstByPlanejamentoEtapaIdAndConcluidoTrueOrderByDataEstudoDescIdDesc(
-                            etapaId);
-
-            if (ultimoRegistroConcluido.isPresent()) {
-                etapa.setConcluida(true);
-                if (!Boolean.TRUE.equals(etapa.getConcluidaManualmente())) {
-                    etapa.setDataConcluida(ultimoRegistroConcluido.get().getDataEstudo());
-                }
-            } else if (!Boolean.TRUE.equals(etapa.getConcluidaManualmente())) {
-                etapa.setConcluida(false);
-                etapa.setDataConcluida(null);
-            }
-
-            planejamentoItemEtapaRepository.save(etapa);
-        });
-    }
-
-    private Long idEtapa(Registro registro) {
-        return registro.getPlanejamentoEtapa() != null
-                ? registro.getPlanejamentoEtapa().getId()
-                : null;
+        etapa.setConcluida(true);
+        etapa.setDataConcluida(dataConclusao);
+        planejamentoItemEtapaRepository.save(etapa);
     }
 
     private record EtapaInformada(boolean valida, PlanejamentoItemEtapa etapa) {}

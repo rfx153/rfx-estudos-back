@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -25,6 +26,7 @@ import rfx_estudos.domain.PlanejamentoGrupoMateria;
 import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
@@ -390,6 +392,29 @@ public class PlanejamentoController {
                         grupoId,
                         itemId,
                         id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/etapas-por-assunto")
+    public ResponseEntity<PlanejamentoItemEtapa> buscarEtapaPorAssunto(
+            @PathVariable Long planejamentoId,
+            @RequestParam Long assuntoId,
+            @RequestParam Long tipoRegistroId) {
+        return planejamentoService.buscarEtapaPorAssunto(planejamentoId, assuntoId, tipoRegistroId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/{planejamentoId}/etapas-por-assunto")
+    public ResponseEntity<PlanejamentoItemEtapa> adicionarEtapaPorAssunto(
+            @PathVariable Long planejamentoId,
+            @RequestBody PlanejamentoEtapaPorAssuntoDTO dados) {
+        if (dados.getAssuntoId() == null || dados.getTipoRegistroId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.adicionarEtapaPorAssunto(planejamentoId, dados)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

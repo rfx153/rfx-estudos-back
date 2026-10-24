@@ -17,6 +17,7 @@ import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
@@ -29,6 +30,7 @@ import rfx_estudos.repository.PlanejamentoGrupoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoItemEtapaRepository;
 import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
+import rfx_estudos.repository.RegistroRepository;
 import rfx_estudos.repository.TipoRegistroRepository;
 
 @Service
@@ -43,6 +45,7 @@ public class PlanejamentoService {
     private final MateriaRepository materiaRepository;
     private final AssuntoRepository assuntoRepository;
     private final TipoRegistroRepository tipoRegistroRepository;
+    private final RegistroRepository registroRepository;
 
     public PlanejamentoService(
             PlanejamentoRepository planejamentoRepository,
@@ -53,7 +56,8 @@ public class PlanejamentoService {
             PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository,
             MateriaRepository materiaRepository,
             AssuntoRepository assuntoRepository,
-            TipoRegistroRepository tipoRegistroRepository) {
+            TipoRegistroRepository tipoRegistroRepository,
+            RegistroRepository registroRepository) {
         this.planejamentoRepository = planejamentoRepository;
         this.planejamentoMateriaRepository = planejamentoMateriaRepository;
         this.planejamentoGrupoAssuntoRepository = planejamentoGrupoAssuntoRepository;
@@ -63,6 +67,7 @@ public class PlanejamentoService {
         this.materiaRepository = materiaRepository;
         this.assuntoRepository = assuntoRepository;
         this.tipoRegistroRepository = tipoRegistroRepository;
+        this.registroRepository = registroRepository;
     }
 
     @Transactional(readOnly = true)
@@ -434,9 +439,11 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
-        return Optional.of(
-                planejamentoItemEtapaRepository
-                        .findByPlanejamentoGrupoAssuntoItemIdOrderByOrdemAsc(itemId));
+        List<PlanejamentoItemEtapa> etapas = planejamentoItemEtapaRepository
+                .findByPlanejamentoGrupoAssuntoItemIdOrderByOrdemAsc(itemId);
+        etapas.forEach(etapa -> etapa.setIniciada(
+                registroRepository.existsByPlanejamentoEtapaId(etapa.getId())));
+        return Optional.of(etapas);
     }
 
     @Transactional(readOnly = true)
@@ -456,6 +463,81 @@ public class PlanejamentoService {
 
         return planejamentoItemEtapaRepository
                 .findByIdAndPlanejamentoGrupoAssuntoItemId(id, itemId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoItemEtapa> buscarEtapaPorAssunto(
+            Long planejamentoId,
+            Long assuntoId,
+            Long tipoRegistroId) {
+        List<PlanejamentoItemEtapa> etapas = planejamentoItemEtapaRepository
+                .findByPlanejamentoAssuntoETipoRegistro(planejamentoId, assuntoId, tipoRegistroId);
+        if (etapas.size() > 1) {
+            throw new PlanejamentoConflitoException("Mais de uma etapa corresponde ao registro");
+        }
+        return etapas.stream().findFirst();
+    }
+
+    @Transactional
+    public Optional<PlanejamentoItemEtapa> adicionarEtapaPorAssunto(
+            Long planejamentoId,
+            PlanejamentoEtapaPorAssuntoDTO dados) {
+        Optional<PlanejamentoItemEtapa> existente = buscarEtapaPorAssunto(
+                planejamentoId,
+                dados.getAssuntoId(),
+                dados.getTipoRegistroId());
+        if (existente.isPresent()) {
+            return existente;
+        }
+
+        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
+        Optional<Assunto> assunto = buscarAssuntoPorId(dados.getAssuntoId());
+        Optional<TipoRegistro> tipoRegistro = buscarTipoRegistroPorId(dados.getTipoRegistroId());
+        if (planejamento.isEmpty() || assunto.isEmpty() || tipoRegistro.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<PlanejamentoGrupoAssuntoItem> itens = planejamentoGrupoAssuntoItemRepository
+                .findByPlanejamentoIdAndAssuntoId(planejamentoId, dados.getAssuntoId());
+        if (itens.size() > 1) {
+            throw new PlanejamentoConflitoException("Mais de um item corresponde ao assunto");
+        }
+
+        PlanejamentoGrupoAssuntoItem item;
+        if (itens.size() == 1) {
+            item = itens.get(0);
+        } else {
+            PlanejamentoMateria planejamentoMateria = planejamentoMateriaRepository
+                    .findByPlanejamentoIdAndMateriaId(
+                            planejamentoId,
+                            assunto.get().getMateria().getId())
+                    .orElseGet(() -> {
+                        PlanejamentoMateria novaMateria = new PlanejamentoMateria();
+                        novaMateria.setPlanejamento(planejamento.get());
+                        novaMateria.setMateria(assunto.get().getMateria());
+                        novaMateria.setPeso((short) 3);
+                        return planejamentoMateriaRepository.save(novaMateria);
+                    });
+
+            PlanejamentoGrupoAssunto grupo = new PlanejamentoGrupoAssunto();
+            grupo.setPlanejamentoMateria(planejamentoMateria);
+            grupo.setTipo(PlanejamentoGrupoAssuntoTipo.ASSUNTO);
+            grupo.setPeso((short) 3);
+            grupo = planejamentoGrupoAssuntoRepository.save(grupo);
+
+            item = new PlanejamentoGrupoAssuntoItem();
+            item.setPlanejamentoGrupoAssunto(grupo);
+            item.setAssunto(assunto.get());
+            item.setPeso((short) 3);
+            item = planejamentoGrupoAssuntoItemRepository.save(item);
+        }
+
+        PlanejamentoItemEtapa etapa = new PlanejamentoItemEtapa();
+        etapa.setPlanejamentoGrupoAssuntoItem(item);
+        etapa.setTipoRegistro(tipoRegistro.get());
+        etapa.setConcluida(false);
+        etapa.setConcluidaManualmente(false);
+        return Optional.of(planejamentoItemEtapaRepository.save(etapa));
     }
 
     @Transactional

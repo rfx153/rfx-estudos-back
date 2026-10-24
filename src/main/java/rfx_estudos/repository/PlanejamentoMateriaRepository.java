@@ -13,5 +13,9 @@ public interface PlanejamentoMateriaRepository extends JpaRepository<Planejament
 
     Optional<PlanejamentoMateria> findByIdAndPlanejamentoId(Long id, Long planejamentoId);
 
+    Optional<PlanejamentoMateria> findByPlanejamentoIdAndMateriaId(
+            Long planejamentoId,
+            Long materiaId);
+
     boolean existsByPlanejamentoGrupoMateriaId(Long planejamentoGrupoMateriaId);
 }

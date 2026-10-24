@@ -51,4 +51,6 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
 
     Optional<Registro> findFirstByPlanejamentoEtapaIdAndConcluidoTrueOrderByDataEstudoDescIdDesc(
             Long planejamentoEtapaId);
+
+    boolean existsByPlanejamentoEtapaId(Long planejamentoEtapaId);
 }
