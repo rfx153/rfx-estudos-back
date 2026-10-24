@@ -27,7 +27,11 @@ public class Registro {
 
     @ManyToOne
     @JoinColumn(name = "ciclo_fk")
-    private Ciclo planejamento;
+    private Ciclo ciclo;
+
+    @ManyToOne
+    @JoinColumn(name = "planejamento_fk")
+    private Planejamento planejamento;
 
     @ManyToOne
     @JoinColumn(name = "tipo_registro_fk")
@@ -81,8 +85,11 @@ public class Registro {
     public MaterialTipo getMaterialTipo() { return materialTipo; }
     public void setMaterialTipo(MaterialTipo materialTipo) { this.materialTipo = materialTipo; }
 
-    public Ciclo getPlanejamento() { return planejamento; }
-    public void setPlanejamento(Ciclo planejamento) { this.planejamento = planejamento; }
+    public Ciclo getCiclo() { return ciclo; }
+    public void setCiclo(Ciclo ciclo) { this.ciclo = ciclo; }
+
+    public Planejamento getPlanejamento() { return planejamento; }
+    public void setPlanejamento(Planejamento planejamento) { this.planejamento = planejamento; }
 
     public TipoRegistro getTipoRegistro() { return tipoRegistro; }
     public void setTipoRegistro(TipoRegistro tipoRegistro) { this.tipoRegistro = tipoRegistro; }

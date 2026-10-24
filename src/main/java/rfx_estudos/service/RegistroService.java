@@ -1,5 +1,6 @@
 package rfx_estudos.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class RegistroService {
 
     @Transactional
     public Optional<Registro> criar(Registro registro) {
-        EtapaInformada etapaInformada = buscarEtapaInformada(registro);
+        EtapaInformada etapaInformada = buscarEtapaDoPlanejamento(registro);
         if (!etapaInformada.valida()) {
             return Optional.empty();
         }
@@ -42,7 +43,7 @@ public class RegistroService {
     @Transactional
     public Optional<Registro> atualizar(Long id, Registro dados) {
         Optional<Registro> registroExistente = registroRepository.findById(id);
-        EtapaInformada etapaNova = buscarEtapaInformada(dados);
+        EtapaInformada etapaNova = buscarEtapaDoPlanejamento(dados);
 
         if (registroExistente.isEmpty() || !etapaNova.valida()) {
             return Optional.empty();
@@ -54,6 +55,7 @@ public class RegistroService {
         registro.setMateria(dados.getMateria());
         registro.setAssunto(dados.getAssunto());
         registro.setMaterialTipo(dados.getMaterialTipo());
+        registro.setCiclo(dados.getCiclo());
         registro.setPlanejamento(dados.getPlanejamento());
         registro.setTipoRegistro(dados.getTipoRegistro());
         registro.setConcluido(Boolean.TRUE.equals(dados.getConcluido()));
@@ -92,22 +94,34 @@ public class RegistroService {
         return true;
     }
 
-    private EtapaInformada buscarEtapaInformada(Registro registro) {
-        if (registro.getPlanejamentoEtapa() == null) {
+    private EtapaInformada buscarEtapaDoPlanejamento(Registro registro) {
+        if (registro.getPlanejamento() == null) {
             return new EtapaInformada(true, null);
         }
 
-        Long etapaId = registro.getPlanejamentoEtapa().getId();
-        if (etapaId == null) {
+        Long planejamentoId = registro.getPlanejamento().getId();
+        Long assuntoId = registro.getAssunto() != null
+                ? registro.getAssunto().getId()
+                : null;
+        Long tipoRegistroId = registro.getTipoRegistro() != null
+                ? registro.getTipoRegistro().getId()
+                : null;
+
+        if (planejamentoId == null || assuntoId == null || tipoRegistroId == null) {
             return new EtapaInformada(false, null);
         }
 
-        Optional<PlanejamentoItemEtapa> etapa = planejamentoItemEtapaRepository.findById(etapaId);
-        if (etapa.isEmpty() || !registroCompativelComEtapa(registro, etapa.get())) {
+        List<PlanejamentoItemEtapa> etapas = planejamentoItemEtapaRepository
+                .findByPlanejamentoAssuntoETipoRegistro(
+                        planejamentoId,
+                        assuntoId,
+                        tipoRegistroId);
+
+        if (etapas.size() != 1) {
             return new EtapaInformada(false, null);
         }
 
-        return new EtapaInformada(true, etapa.get());
+        return new EtapaInformada(true, etapas.get(0));
     }
 
     private void sincronizarEtapa(Long etapaId) {
@@ -138,23 +152,6 @@ public class RegistroService {
         return registro.getPlanejamentoEtapa() != null
                 ? registro.getPlanejamentoEtapa().getId()
                 : null;
-    }
-
-    private boolean registroCompativelComEtapa(
-            Registro registro,
-            PlanejamentoItemEtapa etapa) {
-        if (registro.getAssunto() == null
-                || registro.getAssunto().getId() == null
-                || registro.getTipoRegistro() == null
-                || registro.getTipoRegistro().getId() == null) {
-            return false;
-        }
-
-        Long assuntoDaEtapaId = etapa.getPlanejamentoGrupoAssuntoItem().getAssunto().getId();
-        Long tipoDaEtapaId = etapa.getTipoRegistro().getId();
-
-        return registro.getAssunto().getId().equals(assuntoDaEtapaId)
-                && registro.getTipoRegistro().getId().equals(tipoDaEtapaId);
     }
 
     private record EtapaInformada(boolean valida, PlanejamentoItemEtapa etapa) {}

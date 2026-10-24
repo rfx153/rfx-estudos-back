@@ -29,6 +29,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "materia",
             "assunto",
             "materialTipo",
+            "ciclo",
             "planejamento",
             "tipoRegistro",
             "planejamentoEtapa"
@@ -40,6 +41,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             "materia",
             "assunto",
             "materialTipo",
+            "ciclo",
             "planejamento",
             "tipoRegistro",
             "planejamentoEtapa"
