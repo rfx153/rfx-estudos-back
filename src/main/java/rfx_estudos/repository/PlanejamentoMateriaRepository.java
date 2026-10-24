@@ -12,4 +12,6 @@ public interface PlanejamentoMateriaRepository extends JpaRepository<Planejament
     List<PlanejamentoMateria> findByPlanejamentoIdOrderByOrdemAsc(Long planejamentoId);
 
     Optional<PlanejamentoMateria> findByIdAndPlanejamentoId(Long id, Long planejamentoId);
+
+    boolean existsByPlanejamentoGrupoMateriaId(Long planejamentoGrupoMateriaId);
 }

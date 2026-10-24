@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rfx_estudos.domain.Materia;
 import rfx_estudos.domain.Assunto;
 import rfx_estudos.domain.Planejamento;
+import rfx_estudos.domain.PlanejamentoGrupoMateria;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
@@ -16,6 +17,7 @@ import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
@@ -23,6 +25,7 @@ import rfx_estudos.repository.AssuntoRepository;
 import rfx_estudos.repository.MateriaRepository;
 import rfx_estudos.repository.PlanejamentoGrupoAssuntoItemRepository;
 import rfx_estudos.repository.PlanejamentoGrupoAssuntoRepository;
+import rfx_estudos.repository.PlanejamentoGrupoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoItemEtapaRepository;
 import rfx_estudos.repository.PlanejamentoMateriaRepository;
 import rfx_estudos.repository.PlanejamentoRepository;
@@ -34,6 +37,7 @@ public class PlanejamentoService {
     private final PlanejamentoRepository planejamentoRepository;
     private final PlanejamentoMateriaRepository planejamentoMateriaRepository;
     private final PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository;
+    private final PlanejamentoGrupoMateriaRepository planejamentoGrupoMateriaRepository;
     private final PlanejamentoGrupoAssuntoItemRepository planejamentoGrupoAssuntoItemRepository;
     private final PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository;
     private final MateriaRepository materiaRepository;
@@ -44,6 +48,7 @@ public class PlanejamentoService {
             PlanejamentoRepository planejamentoRepository,
             PlanejamentoMateriaRepository planejamentoMateriaRepository,
             PlanejamentoGrupoAssuntoRepository planejamentoGrupoAssuntoRepository,
+            PlanejamentoGrupoMateriaRepository planejamentoGrupoMateriaRepository,
             PlanejamentoGrupoAssuntoItemRepository planejamentoGrupoAssuntoItemRepository,
             PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository,
             MateriaRepository materiaRepository,
@@ -52,6 +57,7 @@ public class PlanejamentoService {
         this.planejamentoRepository = planejamentoRepository;
         this.planejamentoMateriaRepository = planejamentoMateriaRepository;
         this.planejamentoGrupoAssuntoRepository = planejamentoGrupoAssuntoRepository;
+        this.planejamentoGrupoMateriaRepository = planejamentoGrupoMateriaRepository;
         this.planejamentoGrupoAssuntoItemRepository = planejamentoGrupoAssuntoItemRepository;
         this.planejamentoItemEtapaRepository = planejamentoItemEtapaRepository;
         this.materiaRepository = materiaRepository;
@@ -90,6 +96,60 @@ public class PlanejamentoService {
         return planejamentoRepository.findById(id)
                 .map(planejamento -> {
                     planejamentoRepository.delete(planejamento);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoGrupoMateria>> listarGruposMaterias(Long planejamentoId) {
+        if (!planejamentoRepository.existsById(planejamentoId)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                planejamentoGrupoMateriaRepository.findByPlanejamentoIdOrderByOrdemAsc(planejamentoId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoGrupoMateria> buscarGrupoMateria(Long planejamentoId, Long id) {
+        return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoMateria> adicionarGrupoMateria(
+            Long planejamentoId,
+            PlanejamentoGrupoMateriaDTO dados) {
+        return planejamentoRepository.findById(planejamentoId)
+                .map(planejamento -> {
+                    PlanejamentoGrupoMateria grupo = new PlanejamentoGrupoMateria();
+                    grupo.setPlanejamento(planejamento);
+                    atualizarCampos(grupo, dados);
+                    return planejamentoGrupoMateriaRepository.save(grupo);
+                });
+    }
+
+    @Transactional
+    public Optional<PlanejamentoGrupoMateria> atualizarGrupoMateria(
+            Long planejamentoId,
+            Long id,
+            PlanejamentoGrupoMateriaDTO dados) {
+        return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
+                .map(grupo -> {
+                    atualizarCampos(grupo, dados);
+                    return planejamentoGrupoMateriaRepository.save(grupo);
+                });
+    }
+
+    @Transactional
+    public boolean excluirGrupoMateria(Long planejamentoId, Long id) {
+        return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
+                .map(grupo -> {
+                    if (planejamentoMateriaRepository.existsByPlanejamentoGrupoMateriaId(grupo.getId())) {
+                        throw new PlanejamentoConflitoException(
+                                "Não é possível remover um bloco que ainda possui matérias");
+                    }
+                    planejamentoGrupoMateriaRepository.delete(grupo);
                     return true;
                 })
                 .orElse(false);
@@ -484,11 +544,30 @@ public class PlanejamentoService {
     private void atualizarCampos(
             PlanejamentoMateria planejamentoMateria,
             PlanejamentoMateriaDTO dados) {
+        PlanejamentoGrupoMateria grupoMateria = buscarGrupoMateriaPorId(
+                planejamentoMateria.getPlanejamento().getId(),
+                dados.getPlanejamentoGrupoMateriaId()).orElse(null);
+        if (dados.getPlanejamentoGrupoMateriaId() != null && grupoMateria == null) {
+            throw new PlanejamentoConflitoException(
+                    "O bloco de matérias não pertence a este planejamento");
+        }
+        planejamentoMateria.setPlanejamentoGrupoMateria(grupoMateria);
         planejamentoMateria.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
         planejamentoMateria.setOrdem(dados.getOrdem());
         planejamentoMateria.setDataFinalizarPrevista(dados.getDataFinalizarPrevista());
         planejamentoMateria.setDataFinalizado(dados.getDataFinalizado());
         planejamentoMateria.setObservacoes(dados.getObservacoes());
+    }
+
+    private void atualizarCampos(
+            PlanejamentoGrupoMateria grupo,
+            PlanejamentoGrupoMateriaDTO dados) {
+        grupo.setNome(dados.getNome().trim());
+        grupo.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        grupo.setOrdem(dados.getOrdem());
+        grupo.setDataPrevista(dados.getDataPrevista());
+        grupo.setDataFinalizada(dados.getDataFinalizada());
+        grupo.setObservacoes(dados.getObservacoes());
     }
 
     private void atualizarCampos(
@@ -528,6 +607,18 @@ public class PlanejamentoService {
             Long planejamentoMateriaId) {
         return planejamentoMateriaRepository.findByIdAndPlanejamentoId(
                 planejamentoMateriaId,
+                planejamentoId);
+    }
+
+    private Optional<PlanejamentoGrupoMateria> buscarGrupoMateriaPorId(
+            Long planejamentoId,
+            Long grupoMateriaId) {
+        if (grupoMateriaId == null) {
+            return Optional.empty();
+        }
+
+        return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(
+                grupoMateriaId,
                 planejamentoId);
     }
 

@@ -23,6 +23,10 @@ public class PlanejamentoMateria {
     @JoinColumn(name = "planejamento_fk", nullable = false)
     private Planejamento planejamento;
 
+    @ManyToOne
+    @JoinColumn(name = "planejamento_grupo_materia_fk")
+    private PlanejamentoGrupoMateria planejamentoGrupoMateria;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "materia_fk", nullable = false)
     private Materia materia;
@@ -48,6 +52,13 @@ public class PlanejamentoMateria {
 
     public Planejamento getPlanejamento() { return planejamento; }
     public void setPlanejamento(Planejamento planejamento) { this.planejamento = planejamento; }
+
+    public PlanejamentoGrupoMateria getPlanejamentoGrupoMateria() {
+        return planejamentoGrupoMateria;
+    }
+    public void setPlanejamentoGrupoMateria(PlanejamentoGrupoMateria planejamentoGrupoMateria) {
+        this.planejamentoGrupoMateria = planejamentoGrupoMateria;
+    }
 
     public Materia getMateria() { return materia; }
     public void setMateria(Materia materia) { this.materia = materia; }

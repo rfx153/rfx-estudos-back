@@ -21,10 +21,12 @@ import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.PlanejamentoGrupoAssunto;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoItem;
 import rfx_estudos.domain.PlanejamentoGrupoAssuntoTipo;
+import rfx_estudos.domain.PlanejamentoGrupoMateria;
 import rfx_estudos.domain.PlanejamentoItemEtapa;
 import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
+import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
 import rfx_estudos.service.PlanejamentoService;
@@ -74,6 +76,67 @@ public class PlanejamentoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         if (!planejamentoService.excluir(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{planejamentoId}/grupos-materias")
+    public ResponseEntity<List<PlanejamentoGrupoMateria>> listarGruposMaterias(
+            @PathVariable Long planejamentoId) {
+        return planejamentoService.listarGruposMaterias(planejamentoId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/grupos-materias/{id}")
+    public ResponseEntity<PlanejamentoGrupoMateria> buscarGrupoMateria(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long id) {
+        return planejamentoService.buscarGrupoMateria(planejamentoId, id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{planejamentoId}/grupos-materias")
+    public ResponseEntity<PlanejamentoGrupoMateria> adicionarGrupoMateria(
+            @PathVariable Long planejamentoId,
+            @RequestBody PlanejamentoGrupoMateriaDTO dados) {
+        if (dadosGrupoMateriaInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.adicionarGrupoMateria(planejamentoId, dados)
+                .map(grupo -> {
+                    URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
+                            .path("/{id}")
+                            .buildAndExpand(grupo.getId())
+                            .toUri();
+                    return ResponseEntity.created(localizacao).body(grupo);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/grupos-materias/{id}")
+    public ResponseEntity<PlanejamentoGrupoMateria> atualizarGrupoMateria(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long id,
+            @RequestBody PlanejamentoGrupoMateriaDTO dados) {
+        if (dadosGrupoMateriaInvalidos(dados)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return planejamentoService.atualizarGrupoMateria(planejamentoId, id, dados)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{planejamentoId}/grupos-materias/{id}")
+    public ResponseEntity<Void> excluirGrupoMateria(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long id) {
+        if (!planejamentoService.excluirGrupoMateria(planejamentoId, id)) {
             return ResponseEntity.notFound().build();
         }
 
@@ -402,6 +465,20 @@ public class PlanejamentoController {
 
     private boolean dadosMateriaInvalidos(PlanejamentoMateriaDTO dados) {
         if (dados.getMateriaId() == null) {
+            return true;
+        }
+
+        if (dados.getPeso() != null && (dados.getPeso() < 1 || dados.getPeso() > 5)) {
+            return true;
+        }
+
+        return dados.getOrdem() != null && dados.getOrdem() <= 0;
+    }
+
+    private boolean dadosGrupoMateriaInvalidos(PlanejamentoGrupoMateriaDTO dados) {
+        if (dados.getNome() == null
+                || dados.getNome().isBlank()
+                || dados.getNome().length() > 150) {
             return true;
         }
 

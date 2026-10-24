@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class PlanejamentoMateriaDTO {
 
     private Long materiaId;
+    private Long planejamentoGrupoMateriaId;
     private Short peso = 3;
     private Integer ordem;
     private LocalDate dataFinalizarPrevista;
@@ -15,6 +16,11 @@ public class PlanejamentoMateriaDTO {
 
     public Long getMateriaId() { return materiaId; }
     public void setMateriaId(Long materiaId) { this.materiaId = materiaId; }
+
+    public Long getPlanejamentoGrupoMateriaId() { return planejamentoGrupoMateriaId; }
+    public void setPlanejamentoGrupoMateriaId(Long planejamentoGrupoMateriaId) {
+        this.planejamentoGrupoMateriaId = planejamentoGrupoMateriaId;
+    }
 
     public Short getPeso() { return peso; }
     public void setPeso(Short peso) { this.peso = peso; }
