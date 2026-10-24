@@ -18,6 +18,7 @@ import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoAproveitamentoDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
@@ -476,6 +477,15 @@ public class PlanejamentoService {
             throw new PlanejamentoConflitoException("Mais de uma etapa corresponde ao registro");
         }
         return etapas.stream().findFirst();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoAproveitamentoDTO>> listarAproveitamentos(Long planejamentoId) {
+        if (!planejamentoRepository.existsById(planejamentoId)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(registroRepository.somarQuestoesPorPlanejamento(planejamentoId));
     }
 
     @Transactional

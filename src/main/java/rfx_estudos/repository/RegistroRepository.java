@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import rfx_estudos.domain.Registro;
+import rfx_estudos.dto.PlanejamentoAproveitamentoDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -53,4 +54,16 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
             Long planejamentoEtapaId);
 
     boolean existsByPlanejamentoEtapaId(Long planejamentoEtapaId);
+
+    @Query("""
+            select new rfx_estudos.dto.PlanejamentoAproveitamentoDTO(
+                    r.assunto.id,
+                    coalesce(sum(r.questoesFeitas), 0),
+                    coalesce(sum(r.questoesAcertadas), 0))
+            from Registro r
+            where r.planejamento.id = :planejamentoId
+            group by r.assunto.id
+            """)
+    List<PlanejamentoAproveitamentoDTO> somarQuestoesPorPlanejamento(
+            @Param("planejamentoId") Long planejamentoId);
 }

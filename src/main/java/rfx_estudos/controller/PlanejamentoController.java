@@ -406,6 +406,13 @@ public class PlanejamentoController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @GetMapping("/{planejamentoId}/aproveitamentos")
+    public ResponseEntity<?> listarAproveitamentos(@PathVariable Long planejamentoId) {
+        return planejamentoService.listarAproveitamentos(planejamentoId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/{planejamentoId}/etapas-por-assunto")
     public ResponseEntity<PlanejamentoItemEtapa> adicionarEtapaPorAssunto(
             @PathVariable Long planejamentoId,
