@@ -1,5 +1,7 @@
 package rfx_estudos.domain;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -16,6 +18,9 @@ public class Planejamento {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
+    @Column(name = "data_fim_prevista")
+    private LocalDate dataFimPrevista;
+
     public Planejamento() {}
 
     public Long getId() { return id; }
@@ -26,4 +31,7 @@ public class Planejamento {
 
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public LocalDate getDataFimPrevista() { return dataFimPrevista; }
+    public void setDataFimPrevista(LocalDate dataFimPrevista) { this.dataFimPrevista = dataFimPrevista; }
 }

@@ -93,6 +93,7 @@ public class PlanejamentoService {
                 .map(planejamento -> {
                     planejamento.setNome(dados.getNome());
                     planejamento.setDescricao(dados.getDescricao());
+                    planejamento.setDataFimPrevista(dados.getDataFimPrevista());
                     return planejamentoRepository.save(planejamento);
                 });
     }
