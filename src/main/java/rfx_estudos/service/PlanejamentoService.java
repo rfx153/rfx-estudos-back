@@ -778,6 +778,11 @@ public class PlanejamentoService {
     private void validarInclusaoDoItem(
             PlanejamentoGrupoAssunto grupo,
             Assunto assunto) {
+        if (assuntoJaFoiAdicionadoAoPlanejamento(grupo, assunto, null)) {
+            throw new PlanejamentoConflitoException(
+                    "O assunto já está cadastrado neste planejamento");
+        }
+
         if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
                 && planejamentoGrupoAssuntoItemRepository
                         .existsByPlanejamentoGrupoAssuntoId(grupo.getId())) {
@@ -798,6 +803,11 @@ public class PlanejamentoService {
             PlanejamentoGrupoAssunto grupo,
             Assunto assunto,
             Long itemId) {
+        if (assuntoJaFoiAdicionadoAoPlanejamento(grupo, assunto, itemId)) {
+            throw new PlanejamentoConflitoException(
+                    "O assunto já está cadastrado neste planejamento");
+        }
+
         if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
                 && planejamentoGrupoAssuntoItemRepository
                         .existsByPlanejamentoGrupoAssuntoIdAndIdNot(
@@ -815,6 +825,18 @@ public class PlanejamentoService {
             throw new PlanejamentoConflitoException(
                     "O assunto já está cadastrado neste grupo");
         }
+    }
+
+    private boolean assuntoJaFoiAdicionadoAoPlanejamento(
+            PlanejamentoGrupoAssunto grupo,
+            Assunto assunto,
+            Long itemIdIgnorado) {
+        Long planejamentoId = grupo.getPlanejamentoMateria().getPlanejamento().getId();
+
+        return planejamentoGrupoAssuntoItemRepository
+                .findByPlanejamentoIdAndAssuntoId(planejamentoId, assunto.getId())
+                .stream()
+                .anyMatch(item -> !item.getId().equals(itemIdIgnorado));
     }
 
     private void validarAlteracaoDoTipoDoGrupo(
