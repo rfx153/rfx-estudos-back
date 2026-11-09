@@ -1,6 +1,7 @@
-# Ideia: ciclos de estudo
+# Módulo de ciclos de estudo
 
-> Nota para discussão. Esta proposta ainda não foi implementada.
+> Implementado em 9 de novembro de 2026 para cadastro dos ciclos e ordenação
+> de suas matérias.
 
 > Este conceito não deve ser confundido com o material-guia. Cadastros como
 > `SEFAZ SC Estratégia` e `Guruja Pós-edital` são materiais-guia; um ciclo é a
@@ -48,7 +49,6 @@ ciclos
 ciclos
 ------
 id              BIGSERIAL PRIMARY KEY
-usuario_fk      BIGINT NOT NULL
 nome            VARCHAR(150) NOT NULL
 ativo           BOOLEAN NOT NULL DEFAULT TRUE
 observacoes     TEXT
@@ -56,8 +56,9 @@ criado_em       TIMESTAMP NOT NULL
 atualizado_em   TIMESTAMP NOT NULL
 ```
 
-Cada ciclo pertence a um usuário e possui um nome que explique a combinação de
-matérias, como `PT / Matemática` ou `TI`.
+Cada ciclo possui um nome que explique a combinação de matérias, como
+`PT / Matemática` ou `TI`. O vínculo com usuário será adicionado quando o
+projeto possuir autenticação e uma entidade de usuário.
 
 ## Matérias do ciclo
 
@@ -99,3 +100,22 @@ Quando o uso do ciclo for implementado, será necessário definir onde guardar a
 posição atual — possivelmente em uma coluna ou tabela de progresso — e qual ação
 faz o ciclo avançar. Essa definição fica separada do cadastro para não antecipar
 regras que ainda podem mudar.
+
+## API implementada
+
+```text
+GET    /api/ciclos
+GET    /api/ciclos/{id}
+POST   /api/ciclos
+PUT    /api/ciclos/{id}
+DELETE /api/ciclos/{id}
+
+GET    /api/ciclos/{cicloId}/materias
+POST   /api/ciclos/{cicloId}/materias
+PUT    /api/ciclos/{cicloId}/materias/{id}
+DELETE /api/ciclos/{cicloId}/materias/{id}
+PUT    /api/ciclos/{cicloId}/materias/ordem
+```
+
+A reordenação recebe todos os itens do ciclo e atualiza as posições em uma
+única transação, evitando conflitos temporários com a restrição de ordem única.
