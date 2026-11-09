@@ -2,6 +2,10 @@
 
 > Nota para discussão. Esta proposta ainda não foi implementada.
 
+> Este conceito não deve ser confundido com o material-guia. Cadastros como
+> `SEFAZ SC Estratégia` e `Guruja Pós-edital` são materiais-guia; um ciclo é a
+> sequência de matérias que serão alternadas.
+
 ## Objetivo
 
 Permitir que o usuário organize matérias em ciclos de alternância. Cada ciclo tem

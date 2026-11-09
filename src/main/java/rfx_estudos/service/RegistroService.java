@@ -57,7 +57,7 @@ public class RegistroService {
         registro.setMateria(dados.getMateria());
         registro.setAssunto(dados.getAssunto());
         registro.setMaterialTipo(dados.getMaterialTipo());
-        registro.setCiclo(dados.getCiclo());
+        registro.setMaterialGuia(dados.getMaterialGuia());
         registro.setPlanejamento(dados.getPlanejamento());
         registro.setTipoRegistro(dados.getTipoRegistro());
         registro.setConcluido(Boolean.TRUE.equals(dados.getConcluido()));

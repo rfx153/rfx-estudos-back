@@ -211,17 +211,20 @@ Ainda não foram implementados:
 - as entidades, serviços e endpoints do novo planejamento;
 - a atualização automática das etapas.
 
-## Ajuste necessário no modelo atual
+## Relação com o material-guia
 
-Atualmente, a propriedade Java `Registro.planejamento` está mapeada para a coluna `ciclo_fk` e usa o tipo `Ciclo`. Na implementação futura, os conceitos deverão ser separados:
+O cadastro que originalmente se chamava `Ciclo` representa um material ou pacote
+que guia o estudo, como `SEFAZ SC Estratégia` ou `Guruja Pós-edital`. Por isso, o
+modelo foi renomeado e os conceitos passaram a ficar separados:
 
 ```text
-Registro.ciclo         → ciclo_fk
-Registro.planejamento  → planejamento_fk, caso ainda seja necessário
+Registro.materialGuia  → material_guia_fk
+Registro.planejamento  → planejamento_fk
 Registro.etapa         → planejamento_etapa_fk
 ```
 
-Também deverá ser decidido se `planejamento_fk` continuará em `registros`. Ele pode ser derivado por meio da etapa, do assunto do bloco e do planejamento, portanto mantê-lo poderá gerar redundância.
+O ciclo de estudos é outro conceito: ele organiza a alternância ordenada entre
+matérias e não identifica a origem do material estudado.
 
 ## Pontos ainda em aberto
 

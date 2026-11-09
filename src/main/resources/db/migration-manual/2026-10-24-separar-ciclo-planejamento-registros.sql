@@ -1,6 +1,7 @@
 BEGIN;
 
--- ciclo_fk continua apontando para o material-guia já cadastrado.
+-- A coluna então chamada ciclo_fk apontava para o material-guia já cadastrado.
+-- Ela é renomeada para material_guia_fk pela migração de 2026-11-09.
 -- planejamento_fk passa a apontar para o planejamento de estudos.
 ALTER TABLE public.registros
     ADD COLUMN IF NOT EXISTS planejamento_fk BIGINT;

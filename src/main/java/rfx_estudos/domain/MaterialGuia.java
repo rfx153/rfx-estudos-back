@@ -1,10 +1,15 @@
 package rfx_estudos.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "ciclos_estudo")
-public class Ciclo {
+@Table(name = "materiais_guia")
+public class MaterialGuia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +18,7 @@ public class Ciclo {
     @Column(nullable = false, length = 150, unique = true)
     private String nome;
 
-    public Ciclo() {}
+    public MaterialGuia() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
