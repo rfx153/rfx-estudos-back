@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import rfx_estudos.domain.PlanejamentoItemEtapa;
+import rfx_estudos.domain.CicloItem;
 import rfx_estudos.domain.Registro;
+import rfx_estudos.repository.CicloItemRepository;
 import rfx_estudos.repository.PlanejamentoItemEtapaRepository;
 import rfx_estudos.repository.RegistroRepository;
 
@@ -17,12 +19,15 @@ public class RegistroService {
 
     private final RegistroRepository registroRepository;
     private final PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository;
+    private final CicloItemRepository cicloItemRepository;
 
     public RegistroService(
             RegistroRepository registroRepository,
-            PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository) {
+            PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository,
+            CicloItemRepository cicloItemRepository) {
         this.registroRepository = registroRepository;
         this.planejamentoItemEtapaRepository = planejamentoItemEtapaRepository;
+        this.cicloItemRepository = cicloItemRepository;
     }
 
     @Transactional
@@ -37,6 +42,7 @@ public class RegistroService {
         registro.setPlanejamentoEtapa(etapaInformada.etapa());
 
         Registro criado = registroRepository.saveAndFlush(registro);
+        marcarItensDoCiclo(criado);
         concluirEtapaSeSolicitado(
                 etapaInformada.etapa(),
                 Boolean.TRUE.equals(criado.getConcluido()),
@@ -72,6 +78,8 @@ public class RegistroService {
         registro.setObservacoes(dados.getObservacoes());
 
         Registro atualizado = registroRepository.saveAndFlush(registro);
+        limparConclusoesDoRegistro(atualizado.getId());
+        marcarItensDoCiclo(atualizado);
         concluirEtapaSeSolicitado(
                 etapaNova.etapa(),
                 Boolean.TRUE.equals(atualizado.getConcluido()),
@@ -89,6 +97,25 @@ public class RegistroService {
         registroRepository.delete(registro.get());
         registroRepository.flush();
         return true;
+    }
+
+    private void marcarItensDoCiclo(Registro registro) {
+        if (registro.getMateria() == null || registro.getMateria().getId() == null) return;
+
+        Long planejamentoId = registro.getPlanejamento() != null
+                ? registro.getPlanejamento().getId()
+                : null;
+        List<CicloItem> itens = cicloItemRepository.buscarPendentesDoRegistro(
+                registro.getMateria().getId(),
+                planejamentoId);
+        itens.forEach(item -> item.setRegistroConclusao(registro));
+        cicloItemRepository.saveAllAndFlush(itens);
+    }
+
+    private void limparConclusoesDoRegistro(Long registroId) {
+        List<CicloItem> itens = cicloItemRepository.findByRegistroConclusaoId(registroId);
+        itens.forEach(item -> item.setRegistroConclusao(null));
+        cicloItemRepository.saveAllAndFlush(itens);
     }
 
     private EtapaInformada buscarEtapaDoPlanejamento(Registro registro) {

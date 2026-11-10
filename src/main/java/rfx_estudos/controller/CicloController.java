@@ -103,6 +103,13 @@ public class CicloController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{cicloId}/reiniciar")
+    public ResponseEntity<List<CicloItem>> reiniciar(@PathVariable Long cicloId) {
+        return cicloService.reiniciar(cicloId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{cicloId}/itens/ordem")
     public ResponseEntity<List<CicloItem>> reordenar(
             @PathVariable Long cicloId,

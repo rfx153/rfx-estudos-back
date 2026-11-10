@@ -84,6 +84,19 @@ public class CicloService {
     }
 
     @Transactional
+    public Optional<List<CicloItem>> reiniciar(Long cicloId) {
+        Optional<Ciclo> ciclo = cicloRepository.findById(cicloId);
+        if (ciclo.isEmpty()) return Optional.empty();
+
+        List<CicloItem> itens = cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId);
+        itens.forEach(item -> item.setRegistroConclusao(null));
+        cicloItemRepository.saveAllAndFlush(itens);
+        ciclo.get().marcarAtualizado();
+        cicloRepository.save(ciclo.get());
+        return Optional.of(cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId));
+    }
+
+    @Transactional
     public Optional<CicloItem> adicionarItem(Long cicloId, CicloItemDTO dados) {
         Optional<Ciclo> ciclo = cicloRepository.findById(cicloId);
         if (ciclo.isEmpty()) {

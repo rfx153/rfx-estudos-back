@@ -39,6 +39,10 @@ public class CicloItem {
     @JoinColumn(name = "planejamento_grupo_materia_fk")
     private PlanejamentoGrupoMateria planejamentoGrupoMateria;
 
+    @ManyToOne
+    @JoinColumn(name = "registro_conclusao_fk")
+    private Registro registroConclusao;
+
     @Column(nullable = false)
     private Integer ordem;
 
@@ -60,6 +64,9 @@ public class CicloItem {
     public void setPlanejamentoGrupoMateria(PlanejamentoGrupoMateria planejamentoGrupoMateria) {
         this.planejamentoGrupoMateria = planejamentoGrupoMateria;
     }
+
+    public Registro getRegistroConclusao() { return registroConclusao; }
+    public void setRegistroConclusao(Registro registroConclusao) { this.registroConclusao = registroConclusao; }
 
     public Integer getOrdem() { return ordem; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }
