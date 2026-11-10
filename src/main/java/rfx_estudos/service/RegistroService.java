@@ -62,19 +62,15 @@ public class RegistroService {
         Registro registro = registroExistente.get();
         registro.setMateria(dados.getMateria());
         registro.setAssunto(dados.getAssunto());
-        registro.setMaterialTipo(dados.getMaterialTipo());
         registro.setMaterialGuia(dados.getMaterialGuia());
         registro.setPlanejamento(dados.getPlanejamento());
         registro.setTipoRegistro(dados.getTipoRegistro());
         registro.setConcluido(Boolean.TRUE.equals(dados.getConcluido()));
         registro.setPlanejamentoEtapa(etapaNova.etapa());
-        registro.setMaterialNome(dados.getMaterialNome());
-        registro.setPuntoParada(dados.getPuntoParada());
         registro.setQuestoesFeitas(dados.getQuestoesFeitas());
         registro.setQuestoesAcertadas(dados.getQuestoesAcertadas());
         registro.setDataEstudo(dados.getDataEstudo());
         registro.setTempoEstudado(dados.getTempoEstudado());
-        registro.setLinkDocumento(dados.getLinkDocumento());
         registro.setObservacoes(dados.getObservacoes());
 
         Registro atualizado = registroRepository.saveAndFlush(registro);

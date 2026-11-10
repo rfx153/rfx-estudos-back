@@ -22,10 +22,6 @@ public class Registro {
     private Assunto assunto;
 
     @ManyToOne
-    @JoinColumn(name = "material_tipo_fk")
-    private MaterialTipo materialTipo;
-
-    @ManyToOne
     @JoinColumn(name = "material_guia_fk")
     private MaterialGuia materialGuia;
 
@@ -44,12 +40,6 @@ public class Registro {
     @JoinColumn(name = "planejamento_etapa_fk")
     private PlanejamentoItemEtapa planejamentoEtapa;
 
-    @Column(name = "material_nome", length = 255)
-    private String materialNome;
-
-    @Column(name = "ponto_parada", length = 255)
-    private String puntoParada;
-
     @Column(name = "questoes_feitas")
     private Integer questoesFeitas = 0;
 
@@ -62,9 +52,6 @@ public class Registro {
 
     @Column(name = "tempo_estudado", nullable = false)
     private LocalTime tempoEstudado;
-
-    @Column(name = "link_documento", columnDefinition = "TEXT")
-    private String linkDocumento;
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
@@ -81,9 +68,6 @@ public class Registro {
 
     public Assunto getAssunto() { return assunto; }
     public void setAssunto(Assunto assunto) { this.assunto = assunto; }
-
-    public MaterialTipo getMaterialTipo() { return materialTipo; }
-    public void setMaterialTipo(MaterialTipo materialTipo) { this.materialTipo = materialTipo; }
 
     public MaterialGuia getMaterialGuia() { return materialGuia; }
     public void setMaterialGuia(MaterialGuia materialGuia) { this.materialGuia = materialGuia; }
@@ -102,12 +86,6 @@ public class Registro {
         this.planejamentoEtapa = planejamentoEtapa;
     }
 
-    public String getMaterialNome() { return materialNome; }
-    public void setMaterialNome(String materialNome) { this.materialNome = materialNome; }
-
-    public String getPuntoParada() { return puntoParada; }
-    public void setPuntoParada(String puntoParada) { this.puntoParada = puntoParada; }
-
     public Integer getQuestoesFeitas() { return questoesFeitas; }
     public void setQuestoesFeitas(Integer questoesFeitas) { this.questoesFeitas = questoesFeitas; }
 
@@ -119,9 +97,6 @@ public class Registro {
 
     public LocalTime getTempoEstudado() { return tempoEstudado; }
     public void setTempoEstudado(LocalTime tempoEstudado) { this.tempoEstudado = tempoEstudado; }
-
-    public String getLinkDocumento() { return linkDocumento; }
-    public void setLinkDocumento(String linkDocumento) { this.linkDocumento = linkDocumento; }
 
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
