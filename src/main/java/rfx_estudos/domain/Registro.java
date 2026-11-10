@@ -50,6 +50,9 @@ public class Registro {
     @Column(name = "data_estudo", nullable = false)
     private LocalDate dataEstudo = LocalDate.now();
 
+    @Column(name = "horario_inicio")
+    private LocalTime horarioInicio;
+
     @Column(name = "tempo_estudado", nullable = false)
     private LocalTime tempoEstudado;
 
@@ -94,6 +97,9 @@ public class Registro {
 
     public LocalDate getDataEstudo() { return dataEstudo; }
     public void setDataEstudo(LocalDate dataEstudo) { this.dataEstudo = dataEstudo; }
+
+    public LocalTime getHorarioInicio() { return horarioInicio; }
+    public void setHorarioInicio(LocalTime horarioInicio) { this.horarioInicio = horarioInicio; }
 
     public LocalTime getTempoEstudado() { return tempoEstudado; }
     public void setTempoEstudado(LocalTime tempoEstudado) { this.tempoEstudado = tempoEstudado; }
