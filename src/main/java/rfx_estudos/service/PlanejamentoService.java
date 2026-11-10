@@ -518,23 +518,27 @@ public class PlanejamentoService {
         if (itens.size() == 1) {
             item = itens.get(0);
         } else {
-            PlanejamentoMateria planejamentoMateria = planejamentoMateriaRepository
+            Optional<PlanejamentoMateria> planejamentoMateria = planejamentoMateriaRepository
                     .findByPlanejamentoIdAndMateriaId(
                             planejamentoId,
-                            assunto.get().getMateria().getId())
-                    .orElseGet(() -> {
-                        PlanejamentoMateria novaMateria = new PlanejamentoMateria();
-                        novaMateria.setPlanejamento(planejamento.get());
-                        novaMateria.setMateria(assunto.get().getMateria());
-                        novaMateria.setPeso((short) 3);
-                        return planejamentoMateriaRepository.save(novaMateria);
-                    });
+                            assunto.get().getMateria().getId());
+            if (planejamentoMateria.isEmpty()) {
+                return Optional.empty();
+            }
 
-            PlanejamentoGrupoAssunto grupo = new PlanejamentoGrupoAssunto();
-            grupo.setPlanejamentoMateria(planejamentoMateria);
-            grupo.setTipo(PlanejamentoGrupoAssuntoTipo.ASSUNTO);
-            grupo.setPeso((short) 3);
-            grupo = planejamentoGrupoAssuntoRepository.save(grupo);
+            PlanejamentoGrupoAssunto grupo = planejamentoGrupoAssuntoRepository
+                    .findByPlanejamentoMateriaIdOrderByOrdemAsc(planejamentoMateria.get().getId())
+                    .stream()
+                    .filter(existenteGrupo ->
+                            existenteGrupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO)
+                    .findFirst()
+                    .orElseGet(() -> {
+                        PlanejamentoGrupoAssunto novoGrupo = new PlanejamentoGrupoAssunto();
+                        novoGrupo.setPlanejamentoMateria(planejamentoMateria.get());
+                        novoGrupo.setTipo(PlanejamentoGrupoAssuntoTipo.ASSUNTO);
+                        novoGrupo.setPeso((short) 3);
+                        return planejamentoGrupoAssuntoRepository.save(novoGrupo);
+                    });
 
             item = new PlanejamentoGrupoAssuntoItem();
             item.setPlanejamentoGrupoAssunto(grupo);
