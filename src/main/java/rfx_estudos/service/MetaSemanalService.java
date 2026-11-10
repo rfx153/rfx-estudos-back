@@ -25,7 +25,7 @@ public class MetaSemanalService {
     @Transactional(readOnly = true)
     public List<MetaSemanalResumoDTO> resumir(LocalDate inicioSemana) {
         if (!inicioSemanaValido(inicioSemana)) {
-            throw new IllegalArgumentException("O início da semana deve ser um domingo");
+            throw new IllegalArgumentException("O início da semana deve ser uma segunda-feira");
         }
 
         return metaSemanalRepository.resumir(inicioSemana).stream()
@@ -88,7 +88,7 @@ public class MetaSemanalService {
     }
 
     private boolean inicioSemanaValido(LocalDate inicioSemana) {
-        return inicioSemana != null && inicioSemana.getDayOfWeek() == DayOfWeek.SUNDAY;
+        return inicioSemana != null && inicioSemana.getDayOfWeek() == DayOfWeek.MONDAY;
     }
 
     private void preencher(MetaSemanal meta, MetaSemanalDTO dados) {
