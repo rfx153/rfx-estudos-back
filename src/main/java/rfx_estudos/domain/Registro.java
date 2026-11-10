@@ -22,7 +22,7 @@ public class Registro {
     private Assunto assunto;
 
     @ManyToOne
-    @JoinColumn(name = "material_tipo_fk", nullable = false)
+    @JoinColumn(name = "material_tipo_fk")
     private MaterialTipo materialTipo;
 
     @ManyToOne
