@@ -14,12 +14,13 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(
-        name = "ciclo_materias",
+        name = "ciclo_itens",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uk_ciclo_materias_materia", columnNames = {"ciclo_fk", "materia_fk"}),
-            @UniqueConstraint(name = "uk_ciclo_materias_ordem", columnNames = {"ciclo_fk", "ordem"})
+            @UniqueConstraint(name = "uk_ciclo_itens_materia", columnNames = {"ciclo_fk", "materia_fk"}),
+            @UniqueConstraint(name = "uk_ciclo_itens_grupo", columnNames = {"ciclo_fk", "planejamento_grupo_materia_fk"}),
+            @UniqueConstraint(name = "uk_ciclo_itens_ordem", columnNames = {"ciclo_fk", "ordem"})
         })
-public class CicloMateria {
+public class CicloItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,9 +31,13 @@ public class CicloMateria {
     @JoinColumn(name = "ciclo_fk", nullable = false)
     private Ciclo ciclo;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "materia_fk", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "materia_fk")
     private Materia materia;
+
+    @ManyToOne
+    @JoinColumn(name = "planejamento_grupo_materia_fk")
+    private PlanejamentoGrupoMateria planejamentoGrupoMateria;
 
     @Column(nullable = false)
     private Integer ordem;
@@ -40,7 +45,7 @@ public class CicloMateria {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    public CicloMateria() {}
+    public CicloItem() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -50,6 +55,11 @@ public class CicloMateria {
 
     public Materia getMateria() { return materia; }
     public void setMateria(Materia materia) { this.materia = materia; }
+
+    public PlanejamentoGrupoMateria getPlanejamentoGrupoMateria() { return planejamentoGrupoMateria; }
+    public void setPlanejamentoGrupoMateria(PlanejamentoGrupoMateria planejamentoGrupoMateria) {
+        this.planejamentoGrupoMateria = planejamentoGrupoMateria;
+    }
 
     public Integer getOrdem() { return ordem; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }

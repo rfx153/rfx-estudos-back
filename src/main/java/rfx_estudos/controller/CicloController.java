@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import rfx_estudos.domain.Ciclo;
-import rfx_estudos.domain.CicloMateria;
-import rfx_estudos.dto.CicloMateriaDTO;
+import rfx_estudos.domain.CicloItem;
+import rfx_estudos.dto.CicloItemDTO;
 import rfx_estudos.dto.CicloReordenacaoDTO;
 import rfx_estudos.service.CicloConflitoException;
 import rfx_estudos.service.CicloService;
@@ -78,21 +78,21 @@ public class CicloController {
                 : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/{cicloId}/materias")
-    public ResponseEntity<List<CicloMateria>> listarMaterias(@PathVariable Long cicloId) {
-        return cicloService.listarMaterias(cicloId)
+    @GetMapping("/{cicloId}/itens")
+    public ResponseEntity<List<CicloItem>> listarItens(@PathVariable Long cicloId) {
+        return cicloService.listarItens(cicloId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{cicloId}/materias")
-    public ResponseEntity<CicloMateria> adicionarMateria(
+    @PostMapping("/{cicloId}/itens")
+    public ResponseEntity<CicloItem> adicionarItem(
             @PathVariable Long cicloId,
-            @RequestBody CicloMateriaDTO dados) {
-        if (materiaInvalida(dados)) {
+            @RequestBody CicloItemDTO dados) {
+        if (itemInvalido(dados)) {
             return ResponseEntity.badRequest().build();
         }
-        return cicloService.adicionarMateria(cicloId, dados)
+        return cicloService.adicionarItem(cicloId, dados)
                 .map(item -> {
                     URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
                             .path("/{id}")
@@ -103,8 +103,8 @@ public class CicloController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{cicloId}/materias/ordem")
-    public ResponseEntity<List<CicloMateria>> reordenar(
+    @PutMapping("/{cicloId}/itens/ordem")
+    public ResponseEntity<List<CicloItem>> reordenar(
             @PathVariable Long cicloId,
             @RequestBody CicloReordenacaoDTO dados) {
         try {
@@ -116,24 +116,24 @@ public class CicloController {
         }
     }
 
-    @PutMapping("/{cicloId}/materias/{id}")
-    public ResponseEntity<CicloMateria> atualizarMateria(
+    @PutMapping("/{cicloId}/itens/{id}")
+    public ResponseEntity<CicloItem> atualizarItem(
             @PathVariable Long cicloId,
             @PathVariable Long id,
-            @RequestBody CicloMateriaDTO dados) {
-        if (materiaInvalida(dados)) {
+            @RequestBody CicloItemDTO dados) {
+        if (itemInvalido(dados)) {
             return ResponseEntity.badRequest().build();
         }
-        return cicloService.atualizarMateria(cicloId, id, dados)
+        return cicloService.atualizarItem(cicloId, id, dados)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{cicloId}/materias/{id}")
-    public ResponseEntity<Void> excluirMateria(
+    @DeleteMapping("/{cicloId}/itens/{id}")
+    public ResponseEntity<Void> excluirItem(
             @PathVariable Long cicloId,
             @PathVariable Long id) {
-        return cicloService.excluirMateria(cicloId, id)
+        return cicloService.excluirItem(cicloId, id)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
@@ -148,8 +148,8 @@ public class CicloController {
                 || ciclo.getNome().trim().length() > 150;
     }
 
-    private boolean materiaInvalida(CicloMateriaDTO dados) {
-        return dados == null || dados.getMateriaId() == null
-                || dados.getOrdem() == null || dados.getOrdem() < 1;
+    private boolean itemInvalido(CicloItemDTO dados) {
+        if (dados == null || dados.getOrdem() == null || dados.getOrdem() < 1) return true;
+        return (dados.getMateriaId() == null) == (dados.getPlanejamentoGrupoMateriaId() == null);
     }
 }

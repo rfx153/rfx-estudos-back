@@ -10,30 +10,35 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import rfx_estudos.domain.Ciclo;
-import rfx_estudos.domain.CicloMateria;
+import rfx_estudos.domain.CicloItem;
 import rfx_estudos.domain.Materia;
-import rfx_estudos.dto.CicloMateriaDTO;
+import rfx_estudos.domain.PlanejamentoGrupoMateria;
+import rfx_estudos.dto.CicloItemDTO;
 import rfx_estudos.dto.CicloReordenacaoDTO;
-import rfx_estudos.repository.CicloMateriaRepository;
+import rfx_estudos.repository.CicloItemRepository;
 import rfx_estudos.repository.CicloRepository;
 import rfx_estudos.repository.MateriaRepository;
+import rfx_estudos.repository.PlanejamentoGrupoMateriaRepository;
 
 @Service
 public class CicloService {
 
     private final CicloRepository cicloRepository;
-    private final CicloMateriaRepository cicloMateriaRepository;
+    private final CicloItemRepository cicloItemRepository;
     private final MateriaRepository materiaRepository;
+    private final PlanejamentoGrupoMateriaRepository planejamentoGrupoMateriaRepository;
     private final EntityManager entityManager;
 
     public CicloService(
             CicloRepository cicloRepository,
-            CicloMateriaRepository cicloMateriaRepository,
+            CicloItemRepository cicloItemRepository,
             MateriaRepository materiaRepository,
+            PlanejamentoGrupoMateriaRepository planejamentoGrupoMateriaRepository,
             EntityManager entityManager) {
         this.cicloRepository = cicloRepository;
-        this.cicloMateriaRepository = cicloMateriaRepository;
+        this.cicloItemRepository = cicloItemRepository;
         this.materiaRepository = materiaRepository;
+        this.planejamentoGrupoMateriaRepository = planejamentoGrupoMateriaRepository;
         this.entityManager = entityManager;
     }
 
@@ -71,83 +76,97 @@ public class CicloService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<List<CicloMateria>> listarMaterias(Long cicloId) {
+    public Optional<List<CicloItem>> listarItens(Long cicloId) {
         if (!cicloRepository.existsById(cicloId)) {
             return Optional.empty();
         }
-        return Optional.of(cicloMateriaRepository.findByCicloIdOrderByOrdemAsc(cicloId));
+        return Optional.of(cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId));
     }
 
     @Transactional
-    public Optional<CicloMateria> adicionarMateria(Long cicloId, CicloMateriaDTO dados) {
+    public Optional<CicloItem> adicionarItem(Long cicloId, CicloItemDTO dados) {
         Optional<Ciclo> ciclo = cicloRepository.findById(cicloId);
-        Optional<Materia> materia = materiaRepository.findById(dados.getMateriaId());
-
-        if (ciclo.isEmpty() || materia.isEmpty()) {
+        if (ciclo.isEmpty()) {
             return Optional.empty();
         }
-        if (cicloMateriaRepository.existsByCicloIdAndMateriaId(cicloId, dados.getMateriaId())) {
-            throw new CicloConflitoException("A matéria já pertence a este ciclo");
-        }
 
-        CicloMateria item = new CicloMateria();
+        CicloItem item = new CicloItem();
         item.setCiclo(ciclo.get());
-        item.setMateria(materia.get());
-        preencherMateria(item, dados);
+        if (!preencherReferencia(item, dados, cicloId, false)) {
+            return Optional.empty();
+        }
+        preencherItem(item, dados);
         ciclo.get().marcarAtualizado();
         cicloRepository.save(ciclo.get());
-        return Optional.of(cicloMateriaRepository.save(item));
+        return Optional.of(cicloItemRepository.save(item));
     }
 
     @Transactional
-    public Optional<CicloMateria> atualizarMateria(Long cicloId, Long id, CicloMateriaDTO dados) {
-        Optional<CicloMateria> item = cicloMateriaRepository.findByIdAndCicloId(id, cicloId);
-        Optional<Materia> materia = materiaRepository.findById(dados.getMateriaId());
-        if (item.isEmpty() || materia.isEmpty()) {
+    public Optional<CicloItem> atualizarItem(Long cicloId, Long id, CicloItemDTO dados) {
+        Optional<CicloItem> item = cicloItemRepository.findByIdAndCicloId(id, cicloId);
+        if (item.isEmpty() || !preencherReferencia(item.get(), dados, cicloId, true)) {
             return Optional.empty();
         }
 
-        if (!item.get().getMateria().getId().equals(dados.getMateriaId())
-                && cicloMateriaRepository.existsByCicloIdAndMateriaId(cicloId, dados.getMateriaId())) {
-            throw new CicloConflitoException("A matéria já pertence a este ciclo");
-        }
-
-        item.get().setMateria(materia.get());
-        preencherMateria(item.get(), dados);
+        preencherItem(item.get(), dados);
         item.get().getCiclo().marcarAtualizado();
         cicloRepository.save(item.get().getCiclo());
-        return Optional.of(cicloMateriaRepository.save(item.get()));
+        return Optional.of(cicloItemRepository.save(item.get()));
+    }
+
+    private boolean preencherReferencia(
+            CicloItem item,
+            CicloItemDTO dados,
+            Long cicloId,
+            boolean atualizacao) {
+        if (dados.getMateriaId() != null) {
+            Optional<Materia> materia = materiaRepository.findById(dados.getMateriaId());
+            if (materia.isEmpty()) return false;
+            boolean mesmaMateria = atualizacao && item.getMateria() != null
+                    && item.getMateria().getId().equals(dados.getMateriaId());
+            if (!mesmaMateria && cicloItemRepository.existsByCicloIdAndMateriaId(cicloId, dados.getMateriaId())) {
+                throw new CicloConflitoException("A matéria já pertence a este ciclo");
+            }
+            item.setMateria(materia.get());
+            item.setPlanejamentoGrupoMateria(null);
+            return true;
+        }
+
+        Optional<PlanejamentoGrupoMateria> grupo = planejamentoGrupoMateriaRepository
+                .findById(dados.getPlanejamentoGrupoMateriaId());
+        if (grupo.isEmpty()) return false;
+        boolean mesmoGrupo = atualizacao && item.getPlanejamentoGrupoMateria() != null
+                && item.getPlanejamentoGrupoMateria().getId().equals(dados.getPlanejamentoGrupoMateriaId());
+        if (!mesmoGrupo && cicloItemRepository.existsByCicloIdAndPlanejamentoGrupoMateriaId(
+                cicloId, dados.getPlanejamentoGrupoMateriaId())) {
+            throw new CicloConflitoException("O bloco já pertence a este ciclo");
+        }
+        item.setMateria(null);
+        item.setPlanejamentoGrupoMateria(grupo.get());
+        return true;
     }
 
     @Transactional
-    public boolean excluirMateria(Long cicloId, Long id) {
-        Optional<CicloMateria> item = cicloMateriaRepository.findByIdAndCicloId(id, cicloId);
-        if (item.isEmpty()) {
-            return false;
-        }
+    public boolean excluirItem(Long cicloId, Long id) {
+        Optional<CicloItem> item = cicloItemRepository.findByIdAndCicloId(id, cicloId);
+        if (item.isEmpty()) return false;
 
         Ciclo ciclo = item.get().getCiclo();
-        cicloMateriaRepository.delete(item.get());
-        cicloMateriaRepository.flush();
-        List<CicloMateria> restantes = cicloMateriaRepository.findByCicloIdOrderByOrdemAsc(cicloId);
-        reordenarInternamente(cicloId, restantes.stream()
-                .map(CicloMateria::getId)
-                .toList());
+        cicloItemRepository.delete(item.get());
+        cicloItemRepository.flush();
+        List<CicloItem> restantes = cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId);
+        reordenarInternamente(cicloId, restantes.stream().map(CicloItem::getId).toList());
         ciclo.marcarAtualizado();
         cicloRepository.save(ciclo);
         return true;
     }
 
     @Transactional
-    public Optional<List<CicloMateria>> reordenar(
-            Long cicloId,
-            CicloReordenacaoDTO dados) {
+    public Optional<List<CicloItem>> reordenar(Long cicloId, CicloReordenacaoDTO dados) {
         Optional<Ciclo> ciclo = cicloRepository.findById(cicloId);
-        if (ciclo.isEmpty()) {
-            return Optional.empty();
-        }
+        if (ciclo.isEmpty()) return Optional.empty();
 
-        List<CicloMateria> atuais = cicloMateriaRepository.findByCicloIdOrderByOrdemAsc(cicloId);
+        List<CicloItem> atuais = cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId);
         validarReordenacao(atuais, dados);
         List<Long> idsOrdenados = dados.getItens().stream()
                 .sorted((a, b) -> a.getOrdem().compareTo(b.getOrdem()))
@@ -156,20 +175,14 @@ public class CicloService {
         reordenarInternamente(cicloId, idsOrdenados);
         ciclo.get().marcarAtualizado();
         cicloRepository.save(ciclo.get());
-        return Optional.of(cicloMateriaRepository.findByCicloIdOrderByOrdemAsc(cicloId));
+        return Optional.of(cicloItemRepository.findByCicloIdOrderByOrdemAsc(cicloId));
     }
 
     private void reordenarInternamente(Long cicloId, List<Long> idsOrdenados) {
-        if (idsOrdenados.isEmpty()) {
-            return;
-        }
-
-        cicloMateriaRepository.tornarOrdensTemporarias(cicloId);
+        if (idsOrdenados.isEmpty()) return;
+        cicloItemRepository.tornarOrdensTemporarias(cicloId);
         for (int indice = 0; indice < idsOrdenados.size(); indice++) {
-            int atualizados = cicloMateriaRepository.atualizarOrdem(
-                    cicloId,
-                    idsOrdenados.get(indice),
-                    indice + 1);
+            int atualizados = cicloItemRepository.atualizarOrdem(cicloId, idsOrdenados.get(indice), indice + 1);
             if (atualizados != 1) {
                 throw new CicloConflitoException("A sequência informada é inválida");
             }
@@ -178,17 +191,15 @@ public class CicloService {
         entityManager.clear();
     }
 
-    private void validarReordenacao(
-            List<CicloMateria> atuais,
-            CicloReordenacaoDTO dados) {
+    private void validarReordenacao(List<CicloItem> atuais, CicloReordenacaoDTO dados) {
         if (dados == null || dados.getItens() == null || dados.getItens().size() != atuais.size()) {
-            throw new IllegalArgumentException("A sequência deve conter todas as matérias do ciclo");
+            throw new IllegalArgumentException("A sequência deve conter todos os itens do ciclo");
         }
 
-        Set<Long> idsAtuais = atuais.stream().map(CicloMateria::getId).collect(java.util.stream.Collectors.toSet());
+        Set<Long> idsAtuais = atuais.stream().map(CicloItem::getId)
+                .collect(java.util.stream.Collectors.toSet());
         Set<Long> idsInformados = new HashSet<>();
         Set<Integer> ordens = new HashSet<>();
-
         for (CicloReordenacaoDTO.Item item : dados.getItens()) {
             if (item == null || item.getId() == null || item.getOrdem() == null
                     || item.getOrdem() < 1 || item.getOrdem() > atuais.size()
@@ -197,7 +208,7 @@ public class CicloService {
             }
         }
         if (!idsAtuais.equals(idsInformados)) {
-            throw new IllegalArgumentException("A sequência contém matérias de outro ciclo");
+            throw new IllegalArgumentException("A sequência contém itens de outro ciclo");
         }
     }
 
@@ -207,15 +218,12 @@ public class CicloService {
         ciclo.setObservacoes(limparTexto(dados.getObservacoes()));
     }
 
-    private void preencherMateria(CicloMateria item, CicloMateriaDTO dados) {
+    private void preencherItem(CicloItem item, CicloItemDTO dados) {
         item.setOrdem(dados.getOrdem());
         item.setAtivo(dados.getAtivo() == null ? true : dados.getAtivo());
     }
 
     private String limparTexto(String texto) {
-        if (texto == null || texto.isBlank()) {
-            return null;
-        }
-        return texto.trim();
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 }
