@@ -29,6 +29,8 @@ public class PlanejamentoGrupoMateria {
     @Column(nullable = false)
     private Short peso = 3;
 
+    private Short dificuldade;
+
     private Integer ordem;
 
     @Column(name = "data_prevista")
@@ -53,6 +55,9 @@ public class PlanejamentoGrupoMateria {
 
     public Short getPeso() { return peso; }
     public void setPeso(Short peso) { this.peso = peso; }
+
+    public Short getDificuldade() { return dificuldade; }
+    public void setDificuldade(Short dificuldade) { this.dificuldade = dificuldade; }
 
     public Integer getOrdem() { return ordem; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }

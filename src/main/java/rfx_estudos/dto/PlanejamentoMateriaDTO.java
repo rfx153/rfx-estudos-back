@@ -7,6 +7,7 @@ public class PlanejamentoMateriaDTO {
     private Long materiaId;
     private Long planejamentoGrupoMateriaId;
     private Short peso = 3;
+    private Short dificuldade;
     private Integer ordem;
     private LocalDate dataFinalizarPrevista;
     private LocalDate dataFinalizado;
@@ -24,6 +25,9 @@ public class PlanejamentoMateriaDTO {
 
     public Short getPeso() { return peso; }
     public void setPeso(Short peso) { this.peso = peso; }
+
+    public Short getDificuldade() { return dificuldade; }
+    public void setDificuldade(Short dificuldade) { this.dificuldade = dificuldade; }
 
     public Integer getOrdem() { return ordem; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }

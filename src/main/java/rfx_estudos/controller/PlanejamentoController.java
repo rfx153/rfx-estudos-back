@@ -504,6 +504,11 @@ public class PlanejamentoController {
             return true;
         }
 
+        if (dados.getDificuldade() != null
+                && (dados.getDificuldade() < 1 || dados.getDificuldade() > 5)) {
+            return true;
+        }
+
         return dados.getOrdem() != null && dados.getOrdem() <= 0;
     }
 
@@ -515,6 +520,11 @@ public class PlanejamentoController {
         }
 
         if (dados.getPeso() != null && (dados.getPeso() < 1 || dados.getPeso() > 5)) {
+            return true;
+        }
+
+        if (dados.getDificuldade() != null
+                && (dados.getDificuldade() < 1 || dados.getDificuldade() > 5)) {
             return true;
         }
 
@@ -551,6 +561,11 @@ public class PlanejamentoController {
         }
 
         if (dados.getPeso() != null && (dados.getPeso() < 1 || dados.getPeso() > 5)) {
+            return true;
+        }
+
+        if (dados.getDificuldade() != null
+                && (dados.getDificuldade() < 1 || dados.getDificuldade() > 5)) {
             return true;
         }
 

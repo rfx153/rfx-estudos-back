@@ -646,6 +646,7 @@ public class PlanejamentoService {
         }
         planejamentoMateria.setPlanejamentoGrupoMateria(grupoMateria);
         planejamentoMateria.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        planejamentoMateria.setDificuldade(dados.getDificuldade());
         planejamentoMateria.setOrdem(dados.getOrdem());
         planejamentoMateria.setDataFinalizarPrevista(dados.getDataFinalizarPrevista());
         planejamentoMateria.setDataFinalizado(dados.getDataFinalizado());
@@ -657,6 +658,7 @@ public class PlanejamentoService {
             PlanejamentoGrupoMateriaDTO dados) {
         grupo.setNome(dados.getNome().trim());
         grupo.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        grupo.setDificuldade(dados.getDificuldade());
         grupo.setOrdem(dados.getOrdem());
         grupo.setDataPrevista(dados.getDataPrevista());
         grupo.setDataFinalizada(dados.getDataFinalizada());
@@ -679,6 +681,7 @@ public class PlanejamentoService {
             PlanejamentoGrupoAssuntoItem item,
             PlanejamentoGrupoAssuntoItemDTO dados) {
         item.setPeso(dados.getPeso() != null ? dados.getPeso() : (short) 3);
+        item.setDificuldade(dados.getDificuldade());
         item.setOrdem(dados.getOrdem());
         item.setDataPrevista(dados.getDataPrevista());
         item.setObservacoes(dados.getObservacoes());
