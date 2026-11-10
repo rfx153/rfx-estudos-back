@@ -29,7 +29,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     @EntityGraph(attributePaths = {
             "materia",
             "assunto",
-            "ciclo",
+            "materialGuia",
             "planejamento",
             "tipoRegistro",
             "planejamentoEtapa"
@@ -40,7 +40,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     @EntityGraph(attributePaths = {
             "materia",
             "assunto",
-            "ciclo",
+            "materialGuia",
             "planejamento",
             "tipoRegistro",
             "planejamentoEtapa"
