@@ -28,6 +28,7 @@ import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoEstruturaDTO;
 import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoDestinoRegistroDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
@@ -465,6 +466,19 @@ public class PlanejamentoController {
     @GetMapping("/{planejamentoId}/aproveitamentos")
     public ResponseEntity<?> listarAproveitamentos(@PathVariable Long planejamentoId) {
         return planejamentoService.listarAproveitamentos(planejamentoId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{planejamentoId}/destinos-registro")
+    public ResponseEntity<List<PlanejamentoDestinoRegistroDTO>> listarDestinosRegistro(
+            @PathVariable Long planejamentoId,
+            @RequestParam Long assuntoId,
+            @RequestParam Long tipoRegistroId) {
+        return planejamentoService.listarDestinosRegistro(
+                planejamentoId,
+                assuntoId,
+                tipoRegistroId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

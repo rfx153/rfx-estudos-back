@@ -4,6 +4,7 @@ public class PlanejamentoEtapaPorAssuntoDTO {
 
     private Long assuntoId;
     private Long tipoRegistroId;
+    private Long planejamentoMateriaId;
 
     public PlanejamentoEtapaPorAssuntoDTO() {}
 
@@ -12,4 +13,9 @@ public class PlanejamentoEtapaPorAssuntoDTO {
 
     public Long getTipoRegistroId() { return tipoRegistroId; }
     public void setTipoRegistroId(Long tipoRegistroId) { this.tipoRegistroId = tipoRegistroId; }
+
+    public Long getPlanejamentoMateriaId() { return planejamentoMateriaId; }
+    public void setPlanejamentoMateriaId(Long planejamentoMateriaId) {
+        this.planejamentoMateriaId = planejamentoMateriaId;
+    }
 }

@@ -131,6 +131,27 @@ public class RegistroService {
             return new EtapaInformada(false, null);
         }
 
+        if (registro.getPlanejamentoEtapa() != null
+                && registro.getPlanejamentoEtapa().getId() != null) {
+            Optional<PlanejamentoItemEtapa> etapaInformada = planejamentoItemEtapaRepository
+                    .findById(registro.getPlanejamentoEtapa().getId());
+            if (etapaInformada.isEmpty()) {
+                return new EtapaInformada(false, null);
+            }
+
+            PlanejamentoItemEtapa etapa = etapaInformada.get();
+            boolean correspondeAoRegistro = etapa.getTipoRegistro().getId().equals(tipoRegistroId)
+                    && etapa.getPlanejamentoGrupoAssuntoItem().getAssunto().getId()
+                            .equals(assuntoId)
+                    && etapa.getPlanejamentoGrupoAssuntoItem()
+                            .getPlanejamentoGrupoAssunto()
+                            .getPlanejamentoMateria()
+                            .getPlanejamento()
+                            .getId()
+                            .equals(planejamentoId);
+            return new EtapaInformada(correspondeAoRegistro, correspondeAoRegistro ? etapa : null);
+        }
+
         List<PlanejamentoItemEtapa> etapas = planejamentoItemEtapaRepository
                 .findByPlanejamentoAssuntoETipoRegistro(
                         planejamentoId,

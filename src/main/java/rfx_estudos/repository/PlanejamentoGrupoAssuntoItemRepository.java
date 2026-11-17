@@ -48,4 +48,15 @@ public interface PlanejamentoGrupoAssuntoItemRepository
             @Param("planejamentoId") Long planejamentoId,
             @Param("assuntoId") Long assuntoId);
 
+    @Query("""
+            select item
+            from PlanejamentoGrupoAssuntoItem item
+            join item.planejamentoGrupoAssunto grupo
+            where grupo.planejamentoMateria.id = :planejamentoMateriaId
+              and item.assunto.id = :assuntoId
+            """)
+    List<PlanejamentoGrupoAssuntoItem> findByPlanejamentoMateriaIdAndAssuntoId(
+            @Param("planejamentoMateriaId") Long planejamentoMateriaId,
+            @Param("assuntoId") Long assuntoId);
+
 }

@@ -22,6 +22,7 @@ import rfx_estudos.domain.PlanejamentoMateria;
 import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
+import rfx_estudos.dto.PlanejamentoDestinoRegistroDTO;
 import rfx_estudos.dto.PlanejamentoAproveitamentoDTO;
 import rfx_estudos.dto.PlanejamentoEstruturaDTO;
 import rfx_estudos.dto.PlanejamentoEstruturaLinhaDTO;
@@ -644,18 +645,61 @@ public class PlanejamentoService {
         return Optional.of(registroRepository.somarQuestoesPorPlanejamento(planejamentoId));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<List<PlanejamentoDestinoRegistroDTO>> listarDestinosRegistro(
+            Long planejamentoId,
+            Long assuntoId,
+            Long tipoRegistroId) {
+        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
+        Optional<Assunto> assunto = buscarAssuntoPorId(assuntoId);
+        if (planejamento.isEmpty() || assunto.isEmpty() || tipoRegistroId == null) {
+            return Optional.empty();
+        }
+
+        List<PlanejamentoMateria> materias = planejamentoMateriaRepository
+                .findByPlanejamentoIdAndMateriaIdOrderByOrdemAsc(
+                        planejamentoId,
+                        assunto.get().getMateria().getId());
+
+        return Optional.of(materias.stream().map(planejamentoMateria -> {
+            Optional<PlanejamentoGrupoAssuntoItem> item = planejamentoGrupoAssuntoItemRepository
+                    .findByPlanejamentoMateriaIdAndAssuntoId(
+                            planejamentoMateria.getId(),
+                            assuntoId)
+                    .stream()
+                    .findFirst();
+            Optional<PlanejamentoItemEtapa> etapa = item.stream()
+                    .flatMap(itemEncontrado -> planejamentoItemEtapaRepository
+                            .findByPlanejamentoGrupoAssuntoItemIdOrderByOrdemAsc(
+                                    itemEncontrado.getId())
+                            .stream())
+                    .filter(etapaEncontrada -> etapaEncontrada.getTipoRegistro().getId()
+                            .equals(tipoRegistroId))
+                    .findFirst();
+            String nomeGrupo = item
+                    .map(PlanejamentoGrupoAssuntoItem::getPlanejamentoGrupoAssunto)
+                    .map(grupo -> grupo.getNome() != null
+                            ? grupo.getNome()
+                            : assunto.get().getNome())
+                    .orElse(null);
+
+            return new PlanejamentoDestinoRegistroDTO(
+                    planejamentoMateria.getId(),
+                    etapa.map(PlanejamentoItemEtapa::getId).orElse(null),
+                    planejamento.get().getNome(),
+                    planejamentoMateria.getPlanejamentoGrupoMateria() != null
+                            ? planejamentoMateria.getPlanejamentoGrupoMateria().getNome()
+                            : null,
+                    planejamentoMateria.getMateria().getNome(),
+                    planejamentoMateria.getOrdem(),
+                    nomeGrupo);
+        }).toList());
+    }
+
     @Transactional
     public Optional<PlanejamentoItemEtapa> adicionarEtapaPorAssunto(
             Long planejamentoId,
             PlanejamentoEtapaPorAssuntoDTO dados) {
-        Optional<PlanejamentoItemEtapa> existente = buscarEtapaPorAssunto(
-                planejamentoId,
-                dados.getAssuntoId(),
-                dados.getTipoRegistroId());
-        if (existente.isPresent()) {
-            return existente;
-        }
-
         Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
         Optional<Assunto> assunto = buscarAssuntoPorId(dados.getAssuntoId());
         Optional<TipoRegistro> tipoRegistro = buscarTipoRegistroPorId(dados.getTipoRegistroId());
@@ -663,33 +707,43 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
-        List<PlanejamentoGrupoAssuntoItem> itens = planejamentoGrupoAssuntoItemRepository
-                .findByPlanejamentoIdAndAssuntoId(planejamentoId, dados.getAssuntoId());
-        if (itens.size() > 1) {
-            throw new PlanejamentoConflitoException("Mais de um item corresponde ao assunto");
+        List<PlanejamentoMateria> materias = planejamentoMateriaRepository
+                .findByPlanejamentoIdAndMateriaIdOrderByOrdemAsc(
+                        planejamentoId,
+                        assunto.get().getMateria().getId());
+        PlanejamentoMateria planejamentoMateria;
+        if (dados.getPlanejamentoMateriaId() != null) {
+            planejamentoMateria = materias.stream()
+                    .filter(materia -> materia.getId().equals(dados.getPlanejamentoMateriaId()))
+                    .findFirst()
+                    .orElse(null);
+        } else {
+            planejamentoMateria = materias.size() == 1 ? materias.get(0) : null;
+        }
+        if (planejamentoMateria == null) {
+            return Optional.empty();
         }
 
+        List<PlanejamentoGrupoAssuntoItem> itens = planejamentoGrupoAssuntoItemRepository
+                .findByPlanejamentoMateriaIdAndAssuntoId(
+                        planejamentoMateria.getId(),
+                        dados.getAssuntoId());
         PlanejamentoGrupoAssuntoItem item;
-        if (itens.size() == 1) {
+        if (!itens.isEmpty()) {
             item = itens.get(0);
         } else {
-            Optional<PlanejamentoMateria> planejamentoMateria = planejamentoMateriaRepository
-                    .findByPlanejamentoIdAndMateriaId(
-                            planejamentoId,
-                            assunto.get().getMateria().getId());
-            if (planejamentoMateria.isEmpty()) {
-                return Optional.empty();
-            }
-
             PlanejamentoGrupoAssunto grupo = planejamentoGrupoAssuntoRepository
-                    .findByPlanejamentoMateriaIdOrderByOrdemAsc(planejamentoMateria.get().getId())
+                    .findByPlanejamentoMateriaIdOrderByOrdemAsc(planejamentoMateria.getId())
                     .stream()
                     .filter(existenteGrupo ->
-                            existenteGrupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO)
+                            existenteGrupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
+                                    && !planejamentoGrupoAssuntoItemRepository
+                                            .existsByPlanejamentoGrupoAssuntoId(
+                                                    existenteGrupo.getId()))
                     .findFirst()
                     .orElseGet(() -> {
                         PlanejamentoGrupoAssunto novoGrupo = new PlanejamentoGrupoAssunto();
-                        novoGrupo.setPlanejamentoMateria(planejamentoMateria.get());
+                        novoGrupo.setPlanejamentoMateria(planejamentoMateria);
                         novoGrupo.setTipo(PlanejamentoGrupoAssuntoTipo.ASSUNTO);
                         novoGrupo.setPeso((short) 3);
                         return planejamentoGrupoAssuntoRepository.save(novoGrupo);
@@ -700,6 +754,15 @@ public class PlanejamentoService {
             item.setAssunto(assunto.get());
             item.setPeso((short) 3);
             item = planejamentoGrupoAssuntoItemRepository.save(item);
+        }
+
+        Optional<PlanejamentoItemEtapa> existente = planejamentoItemEtapaRepository
+                .findByPlanejamentoGrupoAssuntoItemIdOrderByOrdemAsc(item.getId())
+                .stream()
+                .filter(etapa -> etapa.getTipoRegistro().getId().equals(dados.getTipoRegistroId()))
+                .findFirst();
+        if (existente.isPresent()) {
+            return existente;
         }
 
         PlanejamentoItemEtapa etapa = new PlanejamentoItemEtapa();
@@ -940,9 +1003,9 @@ public class PlanejamentoService {
     private void validarInclusaoDoItem(
             PlanejamentoGrupoAssunto grupo,
             Assunto assunto) {
-        if (assuntoJaFoiAdicionadoAoPlanejamento(grupo, assunto, null)) {
+        if (assuntoJaFoiAdicionadoNaMateriaDoPlanejamento(grupo, assunto, null)) {
             throw new PlanejamentoConflitoException(
-                    "O assunto já está cadastrado neste planejamento");
+                    "O assunto já está cadastrado nesta ocorrência da matéria");
         }
 
         if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
@@ -965,9 +1028,9 @@ public class PlanejamentoService {
             PlanejamentoGrupoAssunto grupo,
             Assunto assunto,
             Long itemId) {
-        if (assuntoJaFoiAdicionadoAoPlanejamento(grupo, assunto, itemId)) {
+        if (assuntoJaFoiAdicionadoNaMateriaDoPlanejamento(grupo, assunto, itemId)) {
             throw new PlanejamentoConflitoException(
-                    "O assunto já está cadastrado neste planejamento");
+                    "O assunto já está cadastrado nesta ocorrência da matéria");
         }
 
         if (grupo.getTipo() == PlanejamentoGrupoAssuntoTipo.ASSUNTO
@@ -989,14 +1052,14 @@ public class PlanejamentoService {
         }
     }
 
-    private boolean assuntoJaFoiAdicionadoAoPlanejamento(
+    private boolean assuntoJaFoiAdicionadoNaMateriaDoPlanejamento(
             PlanejamentoGrupoAssunto grupo,
             Assunto assunto,
             Long itemIdIgnorado) {
-        Long planejamentoId = grupo.getPlanejamentoMateria().getPlanejamento().getId();
-
         return planejamentoGrupoAssuntoItemRepository
-                .findByPlanejamentoIdAndAssuntoId(planejamentoId, assunto.getId())
+                .findByPlanejamentoMateriaIdAndAssuntoId(
+                        grupo.getPlanejamentoMateria().getId(),
+                        assunto.getId())
                 .stream()
                 .anyMatch(item -> !item.getId().equals(itemIdIgnorado));
     }
