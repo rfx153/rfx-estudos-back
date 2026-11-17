@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,13 +31,16 @@ public class MaterialGuiaController {
     }
 
     @GetMapping
-    public List<MaterialGuia> listarTodos() {
-        return materialGuiaRepository.findAllByOrderByNomeAsc();
+    public List<MaterialGuia> listarTodos(
+            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return incluirInativos
+                ? materialGuiaRepository.findAllByOrderByNomeAsc()
+                : materialGuiaRepository.findByAtivoTrueOrderByNomeAsc();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MaterialGuia> buscarPorId(@PathVariable Long id) {
-        return materialGuiaRepository.findById(id)
+        return materialGuiaRepository.findByIdAndAtivoTrue(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -44,6 +48,7 @@ public class MaterialGuiaController {
     @PostMapping
     public ResponseEntity<MaterialGuia> criar(@RequestBody MaterialGuia materialGuia) {
         materialGuia.setId(null);
+        materialGuia.setAtivo(true);
         MaterialGuia criado = materialGuiaRepository.save(materialGuia);
         URI localizacao = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -56,7 +61,7 @@ public class MaterialGuiaController {
     public ResponseEntity<MaterialGuia> atualizar(
             @PathVariable Long id,
             @RequestBody MaterialGuia dados) {
-        return materialGuiaRepository.findById(id)
+        return materialGuiaRepository.findByIdAndAtivoTrue(id)
                 .map(materialGuia -> {
                     materialGuia.setNome(dados.getNome());
                     return ResponseEntity.ok(materialGuiaRepository.save(materialGuia));
@@ -66,11 +71,12 @@ public class MaterialGuiaController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (!materialGuiaRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        materialGuiaRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return materialGuiaRepository.findByIdAndAtivoTrue(id)
+                .map(materialGuia -> {
+                    materialGuia.setAtivo(false);
+                    materialGuiaRepository.save(materialGuia);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

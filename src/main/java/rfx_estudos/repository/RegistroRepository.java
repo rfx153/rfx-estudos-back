@@ -48,6 +48,29 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     @Query("select r from Registro r where r.materia.id = :materiaId")
     Page<Registro> buscarHistoricoPorMateria(@Param("materiaId") Long materiaId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {
+            "materia",
+            "assunto",
+            "materialGuia",
+            "planejamento",
+            "tipoRegistro",
+            "planejamentoEtapa"
+    })
+    @Query("""
+            select r
+            from Registro r
+            where (:materiaId is null or r.materia.id = :materiaId)
+              and (:assuntoId is null or r.assunto.id = :assuntoId)
+              and (:materialGuiaId is null or r.materialGuia.id = :materialGuiaId)
+              and (:tipoRegistroId is null or r.tipoRegistro.id = :tipoRegistroId)
+            """)
+    Page<Registro> buscarHistoricoFiltrado(
+            @Param("materiaId") Long materiaId,
+            @Param("assuntoId") Long assuntoId,
+            @Param("materialGuiaId") Long materialGuiaId,
+            @Param("tipoRegistroId") Long tipoRegistroId,
+            Pageable pageable);
+
     Optional<Registro> findFirstByPlanejamentoEtapaIdAndConcluidoTrueOrderByDataEstudoDescIdDesc(
             Long planejamentoEtapaId);
 

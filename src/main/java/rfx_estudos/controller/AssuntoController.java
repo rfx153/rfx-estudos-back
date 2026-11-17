@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import rfx_estudos.domain.Assunto;
@@ -32,14 +33,17 @@ public class AssuntoController {
 
     // Rota: http://localhost:8080/api/assuntos (Traz tudo)
     @GetMapping
-    public List<Assunto> listarTodos() {
-        return assuntoRepository.findAll();
+    public List<Assunto> listarTodos(
+            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return incluirInativos
+                ? assuntoRepository.findAllByOrderByNomeAsc()
+                : assuntoRepository.findByAtivoTrueAndMateriaAtivoTrueOrderByNomeAsc();
     }
 
     // Rota: http://localhost:8080/api/assuntos/materia/1 (Traz só os assuntos da matéria com ID 1)
     @GetMapping("/materia/{materiaId}")
     public List<Assunto> listarPorMateria(@PathVariable Long materiaId) {
-        return assuntoRepository.findByMateriaId(materiaId);
+        return assuntoRepository.findByMateriaIdAndAtivoTrueAndMateriaAtivoTrueOrderByNomeAsc(materiaId);
     }
 
     @PostMapping
@@ -51,7 +55,7 @@ public class AssuntoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Assunto> atualizar(@PathVariable Long id, @RequestBody Assunto dados) {
-        return assuntoRepository.findById(id)
+        return assuntoRepository.findByIdAndAtivoTrue(id)
                 .map(assunto -> {
                     assunto.setNome(dados.getNome());
                     return ResponseEntity.ok(assuntoRepository.save(assunto));
@@ -61,12 +65,13 @@ public class AssuntoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (!assuntoRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        assuntoRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return assuntoRepository.findByIdAndAtivoTrue(id)
+                .map(assunto -> {
+                    assunto.setAtivo(false);
+                    assuntoRepository.save(assunto);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
    
 }

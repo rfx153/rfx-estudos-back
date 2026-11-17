@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.repository.TipoRegistroRepository;
@@ -25,18 +26,23 @@ public class TipoRegistroController {
     private TipoRegistroRepository tipoRegistroRepository;
 
     @GetMapping
-    public List<TipoRegistro> listarTodos() {
-        return tipoRegistroRepository.findAllByOrderByNomeAsc();
+    public List<TipoRegistro> listarTodos(
+            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return incluirInativos
+                ? tipoRegistroRepository.findAllByOrderByNomeAsc()
+                : tipoRegistroRepository.findByAtivoTrueOrderByNomeAsc();
     }
 
     @PostMapping
     public ResponseEntity<TipoRegistro> criar(@RequestBody TipoRegistro tipoRegistro) {
+        tipoRegistro.setId(null);
+        tipoRegistro.setAtivo(true);
         return ResponseEntity.ok(tipoRegistroRepository.save(tipoRegistro));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TipoRegistro> atualizar(@PathVariable Long id, @RequestBody TipoRegistro dados) {
-        return tipoRegistroRepository.findById(id)
+        return tipoRegistroRepository.findByIdAndAtivoTrue(id)
                 .map(tipoRegistro -> {
                     tipoRegistro.setNome(dados.getNome());
                     return ResponseEntity.ok(tipoRegistroRepository.save(tipoRegistro));
@@ -46,11 +52,12 @@ public class TipoRegistroController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (!tipoRegistroRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        tipoRegistroRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return tipoRegistroRepository.findByIdAndAtivoTrue(id)
+                .map(tipoRegistro -> {
+                    tipoRegistro.setAtivo(false);
+                    tipoRegistroRepository.save(tipoRegistro);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

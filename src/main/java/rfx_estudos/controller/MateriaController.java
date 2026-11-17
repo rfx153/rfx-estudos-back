@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rfx_estudos.domain.Materia;
 import rfx_estudos.domain.Categoria;
@@ -30,12 +31,17 @@ public class MateriaController {
     private CategoriaRepository categoriaRepository;
 
     @GetMapping
-    public List<Materia> listarTodas() {
-        return materiaRepository.findAll();
+    public List<Materia> listarTodas(
+            @RequestParam(defaultValue = "false") boolean incluirInativas) {
+        return incluirInativas
+                ? materiaRepository.findAllByOrderByNomeAsc()
+                : materiaRepository.findByAtivoTrueOrderByNomeAsc();
     }
 
     @PostMapping
     public ResponseEntity<Materia> criar(@RequestBody Materia materia) {
+        materia.setId(null);
+        materia.setAtivo(true);
         materia.setCategorias(categoriasExistentes(materia));
         Materia novaMateria = materiaRepository.save(materia);
         return ResponseEntity.ok(novaMateria);
@@ -43,7 +49,7 @@ public class MateriaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Materia> atualizar(@PathVariable Long id, @RequestBody Materia dados) {
-        return materiaRepository.findById(id)
+        return materiaRepository.findByIdAndAtivoTrue(id)
                 .map(materia -> {
                     materia.setNome(dados.getNome());
                     materia.setCategorias(categoriasExistentes(dados));
@@ -54,10 +60,10 @@ public class MateriaController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        return materiaRepository.findById(id)
+        return materiaRepository.findByIdAndAtivoTrue(id)
                 .map(materia -> {
-                    materia.getCategorias().clear();
-                    materiaRepository.delete(materia);
+                    materia.setAtivo(false);
+                    materiaRepository.save(materia);
                     return ResponseEntity.noContent().<Void>build();
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());

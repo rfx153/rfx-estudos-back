@@ -133,7 +133,7 @@ public class CicloService {
             Long cicloId,
             boolean atualizacao) {
         if (dados.getMateriaId() != null) {
-            Optional<Materia> materia = materiaRepository.findById(dados.getMateriaId());
+            Optional<Materia> materia = materiaRepository.findByIdAndAtivoTrue(dados.getMateriaId());
             if (materia.isEmpty()) return false;
             boolean mesmaMateria = atualizacao && item.getMateria() != null
                     && item.getMateria().getId().equals(dados.getMateriaId());

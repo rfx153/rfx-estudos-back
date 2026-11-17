@@ -13,6 +13,9 @@ public class Assunto {
     @Column(nullable = false, length = 150)
     private String nome;
 
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
     @ManyToOne
     @JoinColumn(name = "materia_fk", nullable = false) // Mapeia a FK do banco
     private Materia materia;
@@ -26,6 +29,9 @@ public class Assunto {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
     public Materia getMateria() { return materia; }
     public void setMateria(Materia materia) { this.materia = materia; }

@@ -5,11 +5,15 @@ import org.springframework.stereotype.Repository;
 import rfx_estudos.domain.Assunto;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AssuntoRepository extends JpaRepository<Assunto, Long> {
-    
-    // Opcional: Criamos esse método para quando o front-end quiser puxar
-    // apenas os assuntos de uma matéria específica (Ex: carregar só assuntos de Java)
-    List<Assunto> findByMateriaId(Long materiaId);
+    List<Assunto> findAllByOrderByNomeAsc();
+
+    List<Assunto> findByAtivoTrueAndMateriaAtivoTrueOrderByNomeAsc();
+
+    List<Assunto> findByMateriaIdAndAtivoTrueAndMateriaAtivoTrueOrderByNomeAsc(Long materiaId);
+
+    Optional<Assunto> findByIdAndAtivoTrue(Long id);
 }

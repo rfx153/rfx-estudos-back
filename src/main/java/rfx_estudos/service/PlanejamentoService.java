@@ -756,7 +756,7 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
-        return materiaRepository.findById(materiaId);
+        return materiaRepository.findByIdAndAtivoTrue(materiaId);
     }
 
     private Optional<Assunto> buscarAssuntoPorId(Long assuntoId) {
@@ -764,7 +764,7 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
-        return assuntoRepository.findById(assuntoId);
+        return assuntoRepository.findByIdAndAtivoTrue(assuntoId);
     }
 
     private Optional<TipoRegistro> buscarTipoRegistroPorId(Long tipoRegistroId) {
@@ -772,7 +772,7 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
-        return tipoRegistroRepository.findById(tipoRegistroId);
+        return tipoRegistroRepository.findByIdAndAtivoTrue(tipoRegistroId);
     }
 
     private boolean assuntoPertenceAoGrupo(

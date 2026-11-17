@@ -58,7 +58,10 @@ public class RegistroController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size,
             @RequestParam(defaultValue = "100") int limite,
-            @RequestParam(required = false) Long materiaId
+            @RequestParam(required = false) Long materiaId,
+            @RequestParam(required = false) Long assuntoId,
+            @RequestParam(required = false) Long materialGuiaId,
+            @RequestParam(required = false) Long tipoRegistroId
     ) {
         int tamanhoSolicitado = size != null ? size : limite;
         int tamanhoSeguro = Math.min(Math.max(tamanhoSolicitado, 1), 50);
@@ -69,11 +72,12 @@ public class RegistroController {
                 Sort.by(Sort.Direction.DESC, "dataEstudo").and(Sort.by(Sort.Direction.DESC, "id"))
         );
 
-        if (materiaId != null) {
-            return registroRepository.buscarHistoricoPorMateria(materiaId, pagina);
-        }
-
-        return registroRepository.buscarHistorico(pagina);
+        return registroRepository.buscarHistoricoFiltrado(
+                materiaId,
+                assuntoId,
+                materialGuiaId,
+                tipoRegistroId,
+                pagina);
     }
 
     // Rota: http://localhost:8080/api/registros (Salvar uma nova sessão realizada)

@@ -13,6 +13,9 @@ public class Materia {
     @Column(nullable = false, length = 100)
     private String nome;
 
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
     @ManyToMany
     @JoinTable(
         name = "materia_categorias",
@@ -30,6 +33,9 @@ public class Materia {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
     public java.util.Set<Categoria> getCategorias() { return categorias; }
     public void setCategorias(java.util.Set<Categoria> categorias) { this.categorias = categorias; }

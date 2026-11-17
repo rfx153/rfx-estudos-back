@@ -38,7 +38,7 @@ public class MetaMateriaService {
             return Optional.empty();
         }
 
-        return materiaRepository.findById(dados.getMateriaId()).map(materia -> {
+        return materiaRepository.findByIdAndAtivoTrue(dados.getMateriaId()).map(materia -> {
             MetaMateria meta = new MetaMateria();
             preencher(meta, materia, dados);
             return metaMateriaRepository.save(meta);
@@ -52,7 +52,7 @@ public class MetaMateriaService {
         }
 
         Optional<MetaMateria> meta = metaMateriaRepository.findById(id);
-        Optional<Materia> materia = materiaRepository.findById(dados.getMateriaId());
+        Optional<Materia> materia = materiaRepository.findByIdAndAtivoTrue(dados.getMateriaId());
         if (meta.isEmpty() || materia.isEmpty()) {
             return Optional.empty();
         }

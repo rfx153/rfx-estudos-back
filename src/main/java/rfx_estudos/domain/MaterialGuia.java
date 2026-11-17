@@ -18,6 +18,9 @@ public class MaterialGuia {
     @Column(nullable = false, length = 150, unique = true)
     private String nome;
 
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
     public MaterialGuia() {}
 
     public Long getId() { return id; }
@@ -25,4 +28,7 @@ public class MaterialGuia {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 }

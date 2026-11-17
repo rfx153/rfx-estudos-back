@@ -26,12 +26,13 @@ public class AssuntoService {
     @Transactional // Garante a segurança da transação no banco Neon
     public Assunto salvarComMateria(AssuntoNovoDTO dto) {
         // 1. Valida e busca a matéria
-        Materia materia = materiaRepository.findById(dto.getMateriaId())
+        Materia materia = materiaRepository.findByIdAndAtivoTrue(dto.getMateriaId())
                 .orElseThrow(() -> new RuntimeException("Matéria não encontrada com o ID: " + dto.getMateriaId()));
 
         // 2. Monta a entidade
         Assunto novoAssunto = new Assunto();
         novoAssunto.setNome(dto.getNome());
+        novoAssunto.setAtivo(true);
         novoAssunto.setMateria(materia); // Seta a FK (materia_fk)
 
         // 3. Salva no banco via Hibernate
