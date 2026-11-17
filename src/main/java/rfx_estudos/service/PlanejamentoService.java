@@ -29,6 +29,7 @@ import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
+import rfx_estudos.dto.PlanejamentoReordenacaoDTO;
 import rfx_estudos.repository.AssuntoRepository;
 import rfx_estudos.repository.MateriaRepository;
 import rfx_estudos.repository.PlanejamentoGrupoAssuntoItemRepository;
@@ -155,6 +156,29 @@ public class PlanejamentoService {
     }
 
     @Transactional
+    public boolean reordenarGruposMaterias(
+            Long planejamentoId,
+            PlanejamentoReordenacaoDTO dados) {
+        if (!planejamentoRepository.existsById(planejamentoId)) {
+            return false;
+        }
+
+        List<PlanejamentoGrupoMateria> grupos = planejamentoGrupoMateriaRepository
+                .findByPlanejamentoIdOrderByOrdemAsc(planejamentoId);
+        Map<Long, PlanejamentoGrupoMateria> gruposPorId = new LinkedHashMap<>();
+        grupos.forEach(grupo -> gruposPorId.put(grupo.getId(), grupo));
+
+        if (!reordenacaoValida(dados, gruposPorId.keySet())) {
+            return false;
+        }
+
+        dados.getItens().forEach(item ->
+                gruposPorId.get(item.getId()).setOrdem(item.getOrdem()));
+        planejamentoGrupoMateriaRepository.saveAll(gruposPorId.values());
+        return true;
+    }
+
+    @Transactional
     public boolean excluirGrupoMateria(Long planejamentoId, Long id) {
         return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
                 .map(grupo -> {
@@ -277,6 +301,25 @@ public class PlanejamentoService {
     }
 
     @Transactional
+    public boolean reordenarMaterias(
+            Long planejamentoId,
+            PlanejamentoReordenacaoDTO dados) {
+        List<PlanejamentoMateria> materias =
+                planejamentoMateriaRepository.findByPlanejamentoIdOrderByOrdemAsc(planejamentoId);
+        Map<Long, PlanejamentoMateria> materiasPorId = new LinkedHashMap<>();
+        materias.forEach(materia -> materiasPorId.put(materia.getId(), materia));
+
+        if (!reordenacaoValida(dados, materiasPorId.keySet())) {
+            return false;
+        }
+
+        dados.getItens().forEach(item ->
+                materiasPorId.get(item.getId()).setOrdem(item.getOrdem()));
+        planejamentoMateriaRepository.saveAll(materiasPorId.values());
+        return true;
+    }
+
+    @Transactional
     public boolean excluirMateria(Long planejamentoId, Long id) {
         return planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
                 .map(planejamentoMateria -> {
@@ -354,6 +397,30 @@ public class PlanejamentoService {
                     atualizarCampos(grupo, dados);
                     return planejamentoGrupoAssuntoRepository.save(grupo);
                 });
+    }
+
+    @Transactional
+    public boolean reordenarGrupos(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            PlanejamentoReordenacaoDTO dados) {
+        if (buscarPlanejamentoMateria(planejamentoId, planejamentoMateriaId).isEmpty()) {
+            return false;
+        }
+
+        List<PlanejamentoGrupoAssunto> grupos = planejamentoGrupoAssuntoRepository
+                .findByPlanejamentoMateriaIdOrderByOrdemAsc(planejamentoMateriaId);
+        Map<Long, PlanejamentoGrupoAssunto> gruposPorId = new LinkedHashMap<>();
+        grupos.forEach(grupo -> gruposPorId.put(grupo.getId(), grupo));
+
+        if (!reordenacaoValida(dados, gruposPorId.keySet())) {
+            return false;
+        }
+
+        dados.getItens().forEach(item ->
+                gruposPorId.get(item.getId()).setOrdem(item.getOrdem()));
+        planejamentoGrupoAssuntoRepository.saveAll(gruposPorId.values());
+        return true;
     }
 
     @Transactional
@@ -463,6 +530,34 @@ public class PlanejamentoService {
         atualizarCampos(existente, dados);
 
         return Optional.of(planejamentoGrupoAssuntoItemRepository.save(existente));
+    }
+
+    @Transactional
+    public boolean reordenarItens(
+            Long planejamentoId,
+            Long planejamentoMateriaId,
+            Long grupoId,
+            PlanejamentoReordenacaoDTO dados) {
+        if (buscarPlanejamentoGrupoAssunto(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId).isEmpty()) {
+            return false;
+        }
+
+        List<PlanejamentoGrupoAssuntoItem> itens = planejamentoGrupoAssuntoItemRepository
+                .findByPlanejamentoGrupoAssuntoIdOrderByOrdemAsc(grupoId);
+        Map<Long, PlanejamentoGrupoAssuntoItem> itensPorId = new LinkedHashMap<>();
+        itens.forEach(item -> itensPorId.put(item.getId(), item));
+
+        if (!reordenacaoValida(dados, itensPorId.keySet())) {
+            return false;
+        }
+
+        dados.getItens().forEach(item ->
+                itensPorId.get(item.getId()).setOrdem(item.getOrdem()));
+        planejamentoGrupoAssuntoItemRepository.saveAll(itensPorId.values());
+        return true;
     }
 
     @Transactional
@@ -920,5 +1015,29 @@ public class PlanejamentoService {
             throw new PlanejamentoConflitoException(
                     "Um grupo do tipo ASSUNTO pode possuir somente um item");
         }
+    }
+
+    private boolean reordenacaoValida(
+            PlanejamentoReordenacaoDTO dados,
+            Set<Long> idsPermitidos) {
+        if (dados == null || dados.getItens() == null || dados.getItens().isEmpty()) {
+            return false;
+        }
+
+        Set<Long> ids = new HashSet<>();
+        Set<Integer> ordens = new HashSet<>();
+        for (PlanejamentoReordenacaoDTO.Item item : dados.getItens()) {
+            if (item == null
+                    || item.getId() == null
+                    || item.getOrdem() == null
+                    || item.getOrdem() < 1
+                    || !idsPermitidos.contains(item.getId())
+                    || !ids.add(item.getId())
+                    || !ordens.add(item.getOrdem())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

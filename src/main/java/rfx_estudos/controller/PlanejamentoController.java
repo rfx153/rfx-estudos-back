@@ -32,6 +32,7 @@ import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
 import rfx_estudos.dto.PlanejamentoMateriaDTO;
+import rfx_estudos.dto.PlanejamentoReordenacaoDTO;
 import rfx_estudos.service.PlanejamentoService;
 import rfx_estudos.service.PlanejamentoConflitoException;
 
@@ -135,6 +136,15 @@ public class PlanejamentoController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{planejamentoId}/grupos-materias/ordem")
+    public ResponseEntity<Void> reordenarGruposMaterias(
+            @PathVariable Long planejamentoId,
+            @RequestBody PlanejamentoReordenacaoDTO dados) {
+        return planejamentoService.reordenarGruposMaterias(planejamentoId, dados)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.badRequest().build();
+    }
+
     @DeleteMapping("/{planejamentoId}/grupos-materias/{id}")
     public ResponseEntity<Void> excluirGrupoMateria(
             @PathVariable Long planejamentoId,
@@ -204,6 +214,15 @@ public class PlanejamentoController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{planejamentoId}/materias/ordem")
+    public ResponseEntity<Void> reordenarMaterias(
+            @PathVariable Long planejamentoId,
+            @RequestBody PlanejamentoReordenacaoDTO dados) {
+        return planejamentoService.reordenarMaterias(planejamentoId, dados)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.badRequest().build();
+    }
+
     @DeleteMapping("/{planejamentoId}/materias/{id}")
     public ResponseEntity<Void> excluirMateria(
             @PathVariable Long planejamentoId,
@@ -271,6 +290,19 @@ public class PlanejamentoController {
                         dados)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/ordem")
+    public ResponseEntity<Void> reordenarGrupos(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @RequestBody PlanejamentoReordenacaoDTO dados) {
+        return planejamentoService.reordenarGrupos(
+                planejamentoId,
+                planejamentoMateriaId,
+                dados)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.badRequest().build();
     }
 
     @DeleteMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{id}")
@@ -354,6 +386,21 @@ public class PlanejamentoController {
                         dados)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/ordem")
+    public ResponseEntity<Void> reordenarItens(
+            @PathVariable Long planejamentoId,
+            @PathVariable Long planejamentoMateriaId,
+            @PathVariable Long grupoId,
+            @RequestBody PlanejamentoReordenacaoDTO dados) {
+        return planejamentoService.reordenarItens(
+                planejamentoId,
+                planejamentoMateriaId,
+                grupoId,
+                dados)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.badRequest().build();
     }
 
     @DeleteMapping("/{planejamentoId}/materias/{planejamentoMateriaId}/grupos/{grupoId}/itens/{id}")
