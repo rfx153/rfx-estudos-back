@@ -1,7 +1,11 @@
 package rfx_estudos.service;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +23,8 @@ import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoEtapaPorAssuntoDTO;
 import rfx_estudos.dto.PlanejamentoAproveitamentoDTO;
+import rfx_estudos.dto.PlanejamentoEstruturaDTO;
+import rfx_estudos.dto.PlanejamentoEstruturaLinhaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoMateriaDTO;
 import rfx_estudos.dto.PlanejamentoGrupoAssuntoItemDTO;
 import rfx_estudos.dto.PlanejamentoItemEtapaDTO;
@@ -170,6 +176,60 @@ public class PlanejamentoService {
 
         return Optional.of(
                 planejamentoMateriaRepository.findByPlanejamentoIdOrderByOrdemAsc(planejamentoId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PlanejamentoEstruturaDTO> buscarEstrutura(Long planejamentoId) {
+        if (!planejamentoRepository.existsById(planejamentoId)) {
+            return Optional.empty();
+        }
+
+        List<PlanejamentoEstruturaLinhaDTO> linhas = planejamentoGrupoAssuntoRepository
+                .buscarEstruturaPorPlanejamentoId(planejamentoId);
+        Set<Long> etapasIniciadas = new HashSet<>(
+                registroRepository.buscarIdsEtapasIniciadas(planejamentoId));
+
+        Map<Long, PlanejamentoEstruturaDTO.Grupo> grupos = new LinkedHashMap<>();
+        Map<Long, PlanejamentoEstruturaDTO.Item> itens = new LinkedHashMap<>();
+        Map<Long, PlanejamentoEstruturaDTO.Etapa> etapas = new LinkedHashMap<>();
+
+        for (PlanejamentoEstruturaLinhaDTO linha : linhas) {
+            grupos.putIfAbsent(linha.getGrupoId(), new PlanejamentoEstruturaDTO.Grupo(
+                    linha.getGrupoId(),
+                    linha.getPlanejamentoMateriaId(),
+                    PlanejamentoGrupoAssuntoTipo.valueOf(linha.getGrupoTipo()),
+                    linha.getGrupoNome(),
+                    linha.getGrupoPeso(),
+                    linha.getGrupoOrdem()));
+
+            if (linha.getItemId() != null) {
+                itens.putIfAbsent(linha.getItemId(), new PlanejamentoEstruturaDTO.Item(
+                        linha.getItemId(),
+                        linha.getGrupoId(),
+                        linha.getAssuntoId(),
+                        linha.getAssuntoNome(),
+                        linha.getItemPeso(),
+                        linha.getItemDificuldade(),
+                        linha.getItemOrdem()));
+            }
+
+            if (linha.getEtapaId() != null) {
+                etapas.putIfAbsent(linha.getEtapaId(), new PlanejamentoEstruturaDTO.Etapa(
+                        linha.getEtapaId(),
+                        linha.getItemId(),
+                        linha.getTipoRegistroId(),
+                        linha.getTipoRegistroNome(),
+                        linha.getEtapaOrdem(),
+                        etapasIniciadas.contains(linha.getEtapaId()),
+                        linha.getEtapaConcluida(),
+                        linha.getEtapaDataConcluida()));
+            }
+        }
+
+        return Optional.of(new PlanejamentoEstruturaDTO(
+                List.copyOf(grupos.values()),
+                List.copyOf(itens.values()),
+                List.copyOf(etapas.values())));
     }
 
     @Transactional(readOnly = true)

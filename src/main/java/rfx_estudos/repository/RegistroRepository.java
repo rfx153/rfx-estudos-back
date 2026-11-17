@@ -77,6 +77,15 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     boolean existsByPlanejamentoEtapaId(Long planejamentoEtapaId);
 
     @Query("""
+            select distinct r.planejamentoEtapa.id
+            from Registro r
+            where r.planejamentoEtapa.planejamentoGrupoAssuntoItem.planejamentoGrupoAssunto
+                    .planejamentoMateria.planejamento.id = :planejamentoId
+            """)
+    List<Long> buscarIdsEtapasIniciadas(
+            @Param("planejamentoId") Long planejamentoId);
+
+    @Query("""
             select new rfx_estudos.dto.PlanejamentoAproveitamentoDTO(
                     r.assunto.id,
                     coalesce(sum(r.questoesFeitas), 0),

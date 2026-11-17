@@ -47,4 +47,5 @@ public interface PlanejamentoGrupoAssuntoItemRepository
     List<PlanejamentoGrupoAssuntoItem> findByPlanejamentoIdAndAssuntoId(
             @Param("planejamentoId") Long planejamentoId,
             @Param("assuntoId") Long assuntoId);
+
 }

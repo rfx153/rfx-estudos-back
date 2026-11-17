@@ -33,4 +33,5 @@ public interface PlanejamentoItemEtapaRepository
             @Param("planejamentoId") Long planejamentoId,
             @Param("assuntoId") Long assuntoId,
             @Param("tipoRegistroId") Long tipoRegistroId);
+
 }
