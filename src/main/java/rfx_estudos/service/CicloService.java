@@ -135,11 +135,6 @@ public class CicloService {
         if (dados.getMateriaId() != null) {
             Optional<Materia> materia = materiaRepository.findByIdAndAtivoTrue(dados.getMateriaId());
             if (materia.isEmpty()) return false;
-            boolean mesmaMateria = atualizacao && item.getMateria() != null
-                    && item.getMateria().getId().equals(dados.getMateriaId());
-            if (!mesmaMateria && cicloItemRepository.existsByCicloIdAndMateriaId(cicloId, dados.getMateriaId())) {
-                throw new CicloConflitoException("A matéria já pertence a este ciclo");
-            }
             item.setMateria(materia.get());
             item.setPlanejamentoGrupoMateria(null);
             return true;

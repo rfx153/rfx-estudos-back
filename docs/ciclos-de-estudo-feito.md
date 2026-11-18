@@ -71,7 +71,6 @@ materia_fk      BIGINT NOT NULL
 ordem           INTEGER NOT NULL
 ativo           BOOLEAN NOT NULL DEFAULT TRUE
 
-UNIQUE (ciclo_fk, materia_fk)
 UNIQUE (ciclo_fk, ordem)
 ```
 
@@ -79,8 +78,8 @@ Cada linha representa uma matéria na sequência do ciclo. A coluna `ordem`
 define a alternância: ao concluir uma matéria, a próxima será a que tiver a
 ordem seguinte.
 
-As restrições garantem que uma matéria não seja incluída duas vezes no mesmo
-ciclo e que duas matérias não ocupem a mesma posição.
+Uma matéria pode ser incluída mais de uma vez no mesmo ciclo. A restrição de
+ordem continua garantindo que dois itens não ocupem a mesma posição.
 
 ## Fora do escopo inicial
 
@@ -93,13 +92,12 @@ Por enquanto, não serão implementados:
 - metas diárias ou quantidade de matérias por ciclo;
 - horários;
 - indicação da matéria atual/próxima;
-- avanço automático ao registrar estudo;
 - histórico das passagens pelo ciclo.
 
-Quando o uso do ciclo for implementado, será necessário definir onde guardar a
-posição atual — possivelmente em uma coluna ou tabela de progresso — e qual ação
-faz o ciclo avançar. Essa definição fica separada do cadastro para não antecipar
-regras que ainda podem mudar.
+Ao salvar um registro, o backend conclui somente o primeiro item ativo e pendente
+de cada ciclo cuja matéria corresponda ao registro. A posição é respeitada: um
+registro não pula um item anterior ainda pendente. Se a mesma matéria aparecer
+mais de uma vez, cada registro conclui apenas a ocorrência atual do ciclo.
 
 ## API implementada
 
