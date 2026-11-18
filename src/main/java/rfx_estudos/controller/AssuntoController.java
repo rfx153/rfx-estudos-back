@@ -48,6 +48,16 @@ public class AssuntoController {
 
     @PostMapping
     public ResponseEntity<Assunto> criar(@RequestBody AssuntoNovoDTO dto) {
+        String nome = normalizarNome(dto.getNome());
+        if (nome == null || dto.getMateriaId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (assuntoRepository.contarPorMateriaENomeNormalizado(
+                dto.getMateriaId(), nome, null) > 0) {
+            return ResponseEntity.status(409).build();
+        }
+
+        dto.setNome(nome);
         // Busca a matéria pelo ID vindo do DTO, associa ao novo Assunto e salva
         Assunto assuntoSalvo = assuntoService.salvarComMateria(dto);
         return ResponseEntity.ok(assuntoSalvo);
@@ -57,10 +67,24 @@ public class AssuntoController {
     public ResponseEntity<Assunto> atualizar(@PathVariable Long id, @RequestBody Assunto dados) {
         return assuntoRepository.findByIdAndAtivoTrue(id)
                 .map(assunto -> {
-                    assunto.setNome(dados.getNome());
+                    String nome = normalizarNome(dados.getNome());
+                    if (nome == null) {
+                        return ResponseEntity.badRequest().<Assunto>build();
+                    }
+                    if (assuntoRepository.contarPorMateriaENomeNormalizado(
+                            assunto.getMateria().getId(), nome, id) > 0) {
+                        return ResponseEntity.status(409).<Assunto>build();
+                    }
+
+                    assunto.setNome(nome);
                     return ResponseEntity.ok(assuntoRepository.save(assunto));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private String normalizarNome(String nome) {
+        if (nome == null || nome.isBlank()) return null;
+        return nome.trim();
     }
 
     @DeleteMapping("/{id}")
