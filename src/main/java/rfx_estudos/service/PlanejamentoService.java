@@ -650,50 +650,29 @@ public class PlanejamentoService {
             Long planejamentoId,
             Long assuntoId,
             Long tipoRegistroId) {
-        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
-        Optional<Assunto> assunto = buscarAssuntoPorId(assuntoId);
-        if (planejamento.isEmpty() || assunto.isEmpty() || tipoRegistroId == null) {
+        if (planejamentoId == null || assuntoId == null || tipoRegistroId == null) {
             return Optional.empty();
         }
 
-        List<PlanejamentoMateria> materias = planejamentoMateriaRepository
-                .findByPlanejamentoIdAndMateriaIdOrderByOrdemAsc(
-                        planejamentoId,
-                        assunto.get().getMateria().getId());
+        var linhas = planejamentoMateriaRepository
+                .buscarDestinosRegistro(planejamentoId, assuntoId, tipoRegistroId);
+        if (linhas.isEmpty()
+                && (!planejamentoRepository.existsById(planejamentoId)
+                        || buscarAssuntoPorId(assuntoId).isEmpty())) {
+            return Optional.empty();
+        }
 
-        return Optional.of(materias.stream().map(planejamentoMateria -> {
-            Optional<PlanejamentoGrupoAssuntoItem> item = planejamentoGrupoAssuntoItemRepository
-                    .findByPlanejamentoMateriaIdAndAssuntoId(
-                            planejamentoMateria.getId(),
-                            assuntoId)
-                    .stream()
-                    .findFirst();
-            Optional<PlanejamentoItemEtapa> etapa = item.stream()
-                    .flatMap(itemEncontrado -> planejamentoItemEtapaRepository
-                            .findByPlanejamentoGrupoAssuntoItemIdOrderByOrdemAsc(
-                                    itemEncontrado.getId())
-                            .stream())
-                    .filter(etapaEncontrada -> etapaEncontrada.getTipoRegistro().getId()
-                            .equals(tipoRegistroId))
-                    .findFirst();
-            String nomeGrupo = item
-                    .map(PlanejamentoGrupoAssuntoItem::getPlanejamentoGrupoAssunto)
-                    .map(grupo -> grupo.getNome() != null
-                            ? grupo.getNome()
-                            : assunto.get().getNome())
-                    .orElse(null);
-
-            return new PlanejamentoDestinoRegistroDTO(
-                    planejamentoMateria.getId(),
-                    etapa.map(PlanejamentoItemEtapa::getId).orElse(null),
-                    planejamento.get().getNome(),
-                    planejamentoMateria.getPlanejamentoGrupoMateria() != null
-                            ? planejamentoMateria.getPlanejamentoGrupoMateria().getNome()
-                            : null,
-                    planejamentoMateria.getMateria().getNome(),
-                    planejamentoMateria.getOrdem(),
-                    nomeGrupo);
-        }).toList());
+        return Optional.of(linhas
+                .stream()
+                .map(linha -> new PlanejamentoDestinoRegistroDTO(
+                        linha.getPlanejamentoMateriaId(),
+                        linha.getEtapaId(),
+                        linha.getPlanejamentoNome(),
+                        linha.getBlocoMateriaNome(),
+                        linha.getMateriaNome(),
+                        linha.getMateriaOrdem(),
+                        linha.getGrupoAssuntoNome()))
+                .toList());
     }
 
     @Transactional
