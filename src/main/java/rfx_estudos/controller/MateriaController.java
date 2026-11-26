@@ -40,7 +40,16 @@ public class MateriaController {
 
     @PostMapping
     public ResponseEntity<Materia> criar(@RequestBody Materia materia) {
+        String nome = normalizarNome(materia.getNome());
+        if (nome == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (materiaRepository.contarPorNomeNormalizado(nome, null) > 0) {
+            return ResponseEntity.status(409).build();
+        }
+
         materia.setId(null);
+        materia.setNome(nome);
         materia.setAtivo(true);
         materia.setCategorias(categoriasExistentes(materia));
         Materia novaMateria = materiaRepository.save(materia);
@@ -51,11 +60,24 @@ public class MateriaController {
     public ResponseEntity<Materia> atualizar(@PathVariable Long id, @RequestBody Materia dados) {
         return materiaRepository.findByIdAndAtivoTrue(id)
                 .map(materia -> {
-                    materia.setNome(dados.getNome());
+                    String nome = normalizarNome(dados.getNome());
+                    if (nome == null) {
+                        return ResponseEntity.badRequest().<Materia>build();
+                    }
+                    if (materiaRepository.contarPorNomeNormalizado(nome, id) > 0) {
+                        return ResponseEntity.status(409).<Materia>build();
+                    }
+
+                    materia.setNome(nome);
                     materia.setCategorias(categoriasExistentes(dados));
                     return ResponseEntity.ok(materiaRepository.save(materia));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private String normalizarNome(String nome) {
+        if (nome == null || nome.isBlank()) return null;
+        return nome.trim();
     }
 
     @DeleteMapping("/{id}")

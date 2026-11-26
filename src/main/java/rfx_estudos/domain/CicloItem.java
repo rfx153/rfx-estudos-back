@@ -16,7 +16,6 @@ import jakarta.persistence.UniqueConstraint;
 @Table(
         name = "ciclo_itens",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uk_ciclo_itens_materia", columnNames = {"ciclo_fk", "materia_fk"}),
             @UniqueConstraint(name = "uk_ciclo_itens_grupo", columnNames = {"ciclo_fk", "planejamento_grupo_materia_fk"}),
             @UniqueConstraint(name = "uk_ciclo_itens_ordem", columnNames = {"ciclo_fk", "ordem"})
         })

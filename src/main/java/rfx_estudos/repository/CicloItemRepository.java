@@ -35,6 +35,14 @@ public interface CicloItemRepository extends JpaRepository<CicloItem, Long> {
              WHERE c.ativo = TRUE
                AND ci.ativo = TRUE
                AND ci.registro_conclusao_fk IS NULL
+               AND NOT EXISTS (
+                    SELECT 1
+                      FROM ciclo_itens anterior
+                     WHERE anterior.ciclo_fk = ci.ciclo_fk
+                       AND anterior.ativo = TRUE
+                       AND anterior.registro_conclusao_fk IS NULL
+                       AND anterior.ordem < ci.ordem
+               )
                AND (
                     ci.materia_fk = :materiaId
                     OR (

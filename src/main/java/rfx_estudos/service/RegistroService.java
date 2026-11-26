@@ -1,8 +1,12 @@
 package rfx_estudos.service;
 
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,8 +108,18 @@ public class RegistroService {
         List<CicloItem> itens = cicloItemRepository.buscarPendentesDoRegistro(
                 registro.getMateria().getId(),
                 planejamentoId);
-        itens.forEach(item -> item.setRegistroConclusao(registro));
-        cicloItemRepository.saveAllAndFlush(itens);
+        List<CicloItem> primeirosPorCiclo = itens.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getCiclo().getId(),
+                        Function.identity(),
+                        (primeiro, outro) -> Comparator.comparing(CicloItem::getOrdem)
+                                .compare(primeiro, outro) <= 0 ? primeiro : outro,
+                        LinkedHashMap::new))
+                .values()
+                .stream()
+                .toList();
+        primeirosPorCiclo.forEach(item -> item.setRegistroConclusao(registro));
+        cicloItemRepository.saveAllAndFlush(primeirosPorCiclo);
     }
 
     private void limparConclusoesDoRegistro(Long registroId) {
