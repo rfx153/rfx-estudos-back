@@ -80,24 +80,27 @@ public class PlanejamentoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Planejamento> listarTodos() {
-        return planejamentoRepository.findAllByOrderByNomeAsc();
+    public List<Planejamento> listarTodos(boolean incluirInativos) {
+        return incluirInativos
+                ? planejamentoRepository.findAllByOrderByNomeAsc()
+                : planejamentoRepository.findByAtivoTrueOrderByNomeAsc();
     }
 
     @Transactional(readOnly = true)
     public Optional<Planejamento> buscarPorId(Long id) {
-        return planejamentoRepository.findById(id);
+        return planejamentoRepository.findByIdAndAtivoTrue(id);
     }
 
     @Transactional
     public Planejamento criar(Planejamento planejamento) {
         planejamento.setId(null);
+        planejamento.setAtivo(true);
         return planejamentoRepository.save(planejamento);
     }
 
     @Transactional
     public Optional<Planejamento> atualizar(Long id, Planejamento dados) {
-        return planejamentoRepository.findById(id)
+        return planejamentoRepository.findByIdAndAtivoTrue(id)
                 .map(planejamento -> {
                     planejamento.setNome(dados.getNome());
                     planejamento.setDescricao(dados.getDescricao());
@@ -108,9 +111,10 @@ public class PlanejamentoService {
 
     @Transactional
     public boolean excluir(Long id) {
-        return planejamentoRepository.findById(id)
+        return planejamentoRepository.findByIdAndAtivoTrue(id)
                 .map(planejamento -> {
-                    planejamentoRepository.delete(planejamento);
+                    planejamento.setAtivo(false);
+                    planejamentoRepository.save(planejamento);
                     return true;
                 })
                 .orElse(false);
@@ -118,7 +122,7 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<List<PlanejamentoGrupoMateria>> listarGruposMaterias(Long planejamentoId) {
-        if (!planejamentoRepository.existsById(planejamentoId)) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
             return Optional.empty();
         }
 
@@ -128,6 +132,9 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<PlanejamentoGrupoMateria> buscarGrupoMateria(Long planejamentoId, Long id) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return Optional.empty();
+        }
         return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
     }
 
@@ -135,7 +142,7 @@ public class PlanejamentoService {
     public Optional<PlanejamentoGrupoMateria> adicionarGrupoMateria(
             Long planejamentoId,
             PlanejamentoGrupoMateriaDTO dados) {
-        return planejamentoRepository.findById(planejamentoId)
+        return planejamentoRepository.findByIdAndAtivoTrue(planejamentoId)
                 .map(planejamento -> {
                     PlanejamentoGrupoMateria grupo = new PlanejamentoGrupoMateria();
                     grupo.setPlanejamento(planejamento);
@@ -149,6 +156,9 @@ public class PlanejamentoService {
             Long planejamentoId,
             Long id,
             PlanejamentoGrupoMateriaDTO dados) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return Optional.empty();
+        }
         return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
                 .map(grupo -> {
                     atualizarCampos(grupo, dados);
@@ -160,7 +170,7 @@ public class PlanejamentoService {
     public boolean reordenarGruposMaterias(
             Long planejamentoId,
             PlanejamentoReordenacaoDTO dados) {
-        if (!planejamentoRepository.existsById(planejamentoId)) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
             return false;
         }
 
@@ -181,6 +191,9 @@ public class PlanejamentoService {
 
     @Transactional
     public boolean excluirGrupoMateria(Long planejamentoId, Long id) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return false;
+        }
         return planejamentoGrupoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
                 .map(grupo -> {
                     if (planejamentoMateriaRepository.existsByPlanejamentoGrupoMateriaId(grupo.getId())) {
@@ -195,7 +208,7 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<List<PlanejamentoMateria>> listarMaterias(Long planejamentoId) {
-        if (!planejamentoRepository.existsById(planejamentoId)) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
             return Optional.empty();
         }
 
@@ -205,7 +218,7 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<PlanejamentoEstruturaDTO> buscarEstrutura(Long planejamentoId) {
-        if (!planejamentoRepository.existsById(planejamentoId)) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
             return Optional.empty();
         }
 
@@ -259,14 +272,14 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<PlanejamentoMateria> buscarMateria(Long planejamentoId, Long id) {
-        return planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
+        return buscarPlanejamentoMateria(planejamentoId, id);
     }
 
     @Transactional
     public Optional<PlanejamentoMateria> adicionarMateria(
             Long planejamentoId,
             PlanejamentoMateriaDTO dados) {
-        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
+        Optional<Planejamento> planejamento = planejamentoRepository.findByIdAndAtivoTrue(planejamentoId);
         Optional<Materia> materia = buscarMateriaPorId(dados.getMateriaId());
 
         if (planejamento.isEmpty() || materia.isEmpty()) {
@@ -287,7 +300,7 @@ public class PlanejamentoService {
             Long id,
             PlanejamentoMateriaDTO dados) {
         Optional<PlanejamentoMateria> planejamentoMateria =
-                planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId);
+                buscarPlanejamentoMateria(planejamentoId, id);
         Optional<Materia> materia = buscarMateriaPorId(dados.getMateriaId());
 
         if (planejamentoMateria.isEmpty() || materia.isEmpty()) {
@@ -305,6 +318,9 @@ public class PlanejamentoService {
     public boolean reordenarMaterias(
             Long planejamentoId,
             PlanejamentoReordenacaoDTO dados) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return false;
+        }
         List<PlanejamentoMateria> materias =
                 planejamentoMateriaRepository.findByPlanejamentoIdOrderByOrdemAsc(planejamentoId);
         Map<Long, PlanejamentoMateria> materiasPorId = new LinkedHashMap<>();
@@ -322,7 +338,7 @@ public class PlanejamentoService {
 
     @Transactional
     public boolean excluirMateria(Long planejamentoId, Long id) {
-        return planejamentoMateriaRepository.findByIdAndPlanejamentoId(id, planejamentoId)
+        return buscarPlanejamentoMateria(planejamentoId, id)
                 .map(planejamentoMateria -> {
                     planejamentoMateriaRepository.delete(planejamentoMateria);
                     return true;
@@ -628,6 +644,9 @@ public class PlanejamentoService {
             Long planejamentoId,
             Long assuntoId,
             Long tipoRegistroId) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return Optional.empty();
+        }
         List<PlanejamentoItemEtapa> etapas = planejamentoItemEtapaRepository
                 .findByPlanejamentoAssuntoETipoRegistro(planejamentoId, assuntoId, tipoRegistroId);
         if (etapas.size() > 1) {
@@ -638,7 +657,7 @@ public class PlanejamentoService {
 
     @Transactional(readOnly = true)
     public Optional<List<PlanejamentoAproveitamentoDTO>> listarAproveitamentos(Long planejamentoId) {
-        if (!planejamentoRepository.existsById(planejamentoId)) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
             return Optional.empty();
         }
 
@@ -654,11 +673,14 @@ public class PlanejamentoService {
             return Optional.empty();
         }
 
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return Optional.empty();
+        }
+
         var linhas = planejamentoMateriaRepository
                 .buscarDestinosRegistro(planejamentoId, assuntoId, tipoRegistroId);
         if (linhas.isEmpty()
-                && (!planejamentoRepository.existsById(planejamentoId)
-                        || buscarAssuntoPorId(assuntoId).isEmpty())) {
+                && buscarAssuntoPorId(assuntoId).isEmpty()) {
             return Optional.empty();
         }
 
@@ -679,7 +701,7 @@ public class PlanejamentoService {
     public Optional<PlanejamentoItemEtapa> adicionarEtapaPorAssunto(
             Long planejamentoId,
             PlanejamentoEtapaPorAssuntoDTO dados) {
-        Optional<Planejamento> planejamento = planejamentoRepository.findById(planejamentoId);
+        Optional<Planejamento> planejamento = planejamentoRepository.findByIdAndAtivoTrue(planejamentoId);
         Optional<Assunto> assunto = buscarAssuntoPorId(dados.getAssuntoId());
         Optional<TipoRegistro> tipoRegistro = buscarTipoRegistroPorId(dados.getTipoRegistroId());
         if (planejamento.isEmpty() || assunto.isEmpty() || tipoRegistro.isEmpty()) {
@@ -902,6 +924,9 @@ public class PlanejamentoService {
     private Optional<PlanejamentoMateria> buscarPlanejamentoMateria(
             Long planejamentoId,
             Long planejamentoMateriaId) {
+        if (!planejamentoAtivoExiste(planejamentoId)) {
+            return Optional.empty();
+        }
         return planejamentoMateriaRepository.findByIdAndPlanejamentoId(
                 planejamentoMateriaId,
                 planejamentoId);
@@ -910,7 +935,7 @@ public class PlanejamentoService {
     private Optional<PlanejamentoGrupoMateria> buscarGrupoMateriaPorId(
             Long planejamentoId,
             Long grupoMateriaId) {
-        if (grupoMateriaId == null) {
+        if (grupoMateriaId == null || !planejamentoAtivoExiste(planejamentoId)) {
             return Optional.empty();
         }
 
@@ -970,6 +995,11 @@ public class PlanejamentoService {
         }
 
         return tipoRegistroRepository.findByIdAndAtivoTrue(tipoRegistroId);
+    }
+
+    private boolean planejamentoAtivoExiste(Long planejamentoId) {
+        return planejamentoId != null
+                && planejamentoRepository.existsByIdAndAtivoTrue(planejamentoId);
     }
 
     private boolean assuntoPertenceAoGrupo(

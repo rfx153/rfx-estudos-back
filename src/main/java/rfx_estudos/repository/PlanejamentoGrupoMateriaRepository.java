@@ -13,4 +13,6 @@ public interface PlanejamentoGrupoMateriaRepository
     List<PlanejamentoGrupoMateria> findByPlanejamentoIdOrderByOrdemAsc(Long planejamentoId);
 
     Optional<PlanejamentoGrupoMateria> findByIdAndPlanejamentoId(Long id, Long planejamentoId);
+
+    Optional<PlanejamentoGrupoMateria> findByIdAndPlanejamentoAtivoTrue(Long id);
 }

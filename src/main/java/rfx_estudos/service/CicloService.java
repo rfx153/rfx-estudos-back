@@ -141,7 +141,7 @@ public class CicloService {
         }
 
         Optional<PlanejamentoGrupoMateria> grupo = planejamentoGrupoMateriaRepository
-                .findById(dados.getPlanejamentoGrupoMateriaId());
+                .findByIdAndPlanejamentoAtivoTrue(dados.getPlanejamentoGrupoMateriaId());
         if (grupo.isEmpty()) return false;
         boolean mesmoGrupo = atualizacao && item.getPlanejamentoGrupoMateria() != null
                 && item.getPlanejamentoGrupoMateria().getId().equals(dados.getPlanejamentoGrupoMateriaId());

@@ -12,7 +12,7 @@ public class Planejamento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150, unique = true)
+    @Column(nullable = false, length = 150)
     private String nome;
 
     @Column(columnDefinition = "TEXT")
@@ -20,6 +20,9 @@ public class Planejamento {
 
     @Column(name = "data_fim_prevista")
     private LocalDate dataFimPrevista;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
 
     public Planejamento() {}
 
@@ -34,4 +37,7 @@ public class Planejamento {
 
     public LocalDate getDataFimPrevista() { return dataFimPrevista; }
     public void setDataFimPrevista(LocalDate dataFimPrevista) { this.dataFimPrevista = dataFimPrevista; }
+
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 }

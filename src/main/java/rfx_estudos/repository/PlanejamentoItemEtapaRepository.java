@@ -26,6 +26,7 @@ public interface PlanejamentoItemEtapaRepository
             join item.planejamentoGrupoAssunto grupo
             join grupo.planejamentoMateria planejamentoMateria
             where planejamentoMateria.planejamento.id = :planejamentoId
+              and planejamentoMateria.planejamento.ativo = true
               and item.assunto.id = :assuntoId
               and etapa.tipoRegistro.id = :tipoRegistroId
             """)

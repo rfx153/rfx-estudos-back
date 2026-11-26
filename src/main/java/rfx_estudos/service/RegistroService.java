@@ -16,6 +16,7 @@ import rfx_estudos.domain.CicloItem;
 import rfx_estudos.domain.Registro;
 import rfx_estudos.repository.CicloItemRepository;
 import rfx_estudos.repository.PlanejamentoItemEtapaRepository;
+import rfx_estudos.repository.PlanejamentoRepository;
 import rfx_estudos.repository.RegistroRepository;
 
 @Service
@@ -23,14 +24,17 @@ public class RegistroService {
 
     private final RegistroRepository registroRepository;
     private final PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository;
+    private final PlanejamentoRepository planejamentoRepository;
     private final CicloItemRepository cicloItemRepository;
 
     public RegistroService(
             RegistroRepository registroRepository,
             PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository,
+            PlanejamentoRepository planejamentoRepository,
             CicloItemRepository cicloItemRepository) {
         this.registroRepository = registroRepository;
         this.planejamentoItemEtapaRepository = planejamentoItemEtapaRepository;
+        this.planejamentoRepository = planejamentoRepository;
         this.cicloItemRepository = cicloItemRepository;
     }
 
@@ -142,6 +146,10 @@ public class RegistroService {
                 : null;
 
         if (planejamentoId == null || assuntoId == null || tipoRegistroId == null) {
+            return new EtapaInformada(false, null);
+        }
+
+        if (!planejamentoRepository.existsByIdAndAtivoTrue(planejamentoId)) {
             return new EtapaInformada(false, null);
         }
 

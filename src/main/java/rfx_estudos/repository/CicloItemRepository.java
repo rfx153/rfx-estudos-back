@@ -32,14 +32,22 @@ public interface CicloItemRepository extends JpaRepository<CicloItem, Long> {
                 ON pg.id = ci.planejamento_grupo_materia_fk
               LEFT JOIN planejamento_materias pm
                 ON pm.planejamento_grupo_materia_fk = pg.id
+              LEFT JOIN planejamentos p
+                ON p.id = pg.planejamento_fk
              WHERE c.ativo = TRUE
                AND ci.ativo = TRUE
+               AND (ci.materia_fk IS NOT NULL OR p.ativo = TRUE)
                AND ci.registro_conclusao_fk IS NULL
                AND NOT EXISTS (
                     SELECT 1
                       FROM ciclo_itens anterior
+                      LEFT JOIN planejamento_grupos_materias pg_anterior
+                        ON pg_anterior.id = anterior.planejamento_grupo_materia_fk
+                      LEFT JOIN planejamentos p_anterior
+                        ON p_anterior.id = pg_anterior.planejamento_fk
                      WHERE anterior.ciclo_fk = ci.ciclo_fk
                        AND anterior.ativo = TRUE
+                       AND (anterior.materia_fk IS NOT NULL OR p_anterior.ativo = TRUE)
                        AND anterior.registro_conclusao_fk IS NULL
                        AND anterior.ordem < ci.ordem
                )
@@ -48,6 +56,7 @@ public interface CicloItemRepository extends JpaRepository<CicloItem, Long> {
                     OR (
                         :planejamentoId IS NOT NULL
                         AND pg.planejamento_fk = :planejamentoId
+                        AND p.ativo = TRUE
                         AND pm.materia_fk = :materiaId
                     )
                )

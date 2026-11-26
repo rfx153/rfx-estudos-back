@@ -1,6 +1,7 @@
 package rfx_estudos.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,9 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import rfx_estudos.domain.Ciclo;
 import rfx_estudos.domain.CicloItem;
 import rfx_estudos.domain.Materia;
+import rfx_estudos.domain.Assunto;
+import rfx_estudos.domain.Planejamento;
 import rfx_estudos.domain.Registro;
+import rfx_estudos.domain.TipoRegistro;
 import rfx_estudos.repository.CicloItemRepository;
 import rfx_estudos.repository.PlanejamentoItemEtapaRepository;
+import rfx_estudos.repository.PlanejamentoRepository;
 import rfx_estudos.repository.RegistroRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +31,7 @@ class RegistroServiceTest {
 
     @Mock private RegistroRepository registroRepository;
     @Mock private PlanejamentoItemEtapaRepository planejamentoItemEtapaRepository;
+    @Mock private PlanejamentoRepository planejamentoRepository;
     @Mock private CicloItemRepository cicloItemRepository;
 
     @InjectMocks private RegistroService service;
@@ -59,6 +65,26 @@ class RegistroServiceTest {
         assertThat(primeiraMatematica.getRegistroConclusao()).isSameAs(registro);
         assertThat(segundaMatematica.getRegistroConclusao()).isNull();
         assertThat(matematicaOutroCiclo.getRegistroConclusao()).isSameAs(registro);
+    }
+
+    @Test
+    void naoDeveCriarRegistroEmPlanejamentoDesabilitado() {
+        Planejamento planejamento = new Planejamento();
+        planejamento.setId(1L);
+        Assunto assunto = new Assunto();
+        assunto.setId(2L);
+        TipoRegistro tipoRegistro = new TipoRegistro();
+        tipoRegistro.setId(3L);
+        Registro registro = new Registro();
+        registro.setPlanejamento(planejamento);
+        registro.setAssunto(assunto);
+        registro.setTipoRegistro(tipoRegistro);
+        when(planejamentoRepository.existsByIdAndAtivoTrue(1L)).thenReturn(false);
+
+        assertThat(service.criar(registro)).isEmpty();
+
+        verify(planejamentoRepository).existsByIdAndAtivoTrue(1L);
+        verifyNoInteractions(registroRepository, planejamentoItemEtapaRepository);
     }
 
     private Ciclo ciclo(Long id) {

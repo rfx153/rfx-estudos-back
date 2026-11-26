@@ -49,8 +49,9 @@ public class PlanejamentoController {
     }
 
     @GetMapping
-    public List<Planejamento> listarTodos() {
-        return planejamentoService.listarTodos();
+    public List<Planejamento> listarTodos(
+            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return planejamentoService.listarTodos(incluirInativos);
     }
 
     @GetMapping("/{id}")
