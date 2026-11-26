@@ -38,6 +38,10 @@ Categoria: TECNOLOGIA
 Planejamento: Construir uma API financeira
 Modelo: ATIVIDADES
 
+Categoria: TECNOLOGIA
+Planejamento: Formação em Tecnologia
+Modelo: CONTEUDO
+
 Categoria: BASE/PESQUISA
 Planejamento: Fundamentos de Ciência da Computação
 Modelo: CONTEUDO
@@ -99,6 +103,11 @@ Planejamento
 Exemplos de etapas: teoria, resumo, revisão, questões e simulado.
 
 Esse modelo atende principalmente concursos, cursos estruturados, certificações e formação sistemática de base.
+
+O modelo também pode atender ao estudo de tecnologia sem exigir que todo o
+conteúdo seja catalogado antecipadamente. Nesse caso, os assuntos representam
+divisões amplas e estáveis da matéria, enquanto o conteúdo específico estudado
+em uma sessão fica apenas no registro.
 
 O fluxo atual de concurso deve ser preservado. A ampliação para outras áreas não deve exigir assuntos artificiais nem enfraquecer suas validações.
 
@@ -201,6 +210,169 @@ MaterialGuia
 A relação entre materiais-guia e matérias tende a ser muitos-para-muitos, pois uma formação pode abordar Java, Spring Boot, banco de dados e APIs.
 
 As categorias de um material poderão inicialmente ser derivadas das matérias relacionadas. Uma associação direta com categorias só será necessária se a classificação do material precisar ser independente delas.
+
+## Refinamento proposto para Tecnologia
+
+O planejamento de estudo em Tecnologia deve evitar o cadastro detalhado de
+cada capítulo, aula ou conceito encontrado. A estrutura inicial pode continuar
+próxima ao planejamento de conteúdo atual, acrescida de materiais e projetos de
+aplicação:
+
+```text
+Planejamento
+└── Matérias
+    ├── Assuntos amplos
+    ├── Materiais
+    └── Projetos
+```
+
+Os conceitos possuem responsabilidades diferentes:
+
+```text
+Matéria       Domínio de conhecimento acompanhado no planejamento
+Assunto       Divisão ampla e reutilizável da matéria
+Material      Fonte usada para adquirir ou revisar conhecimento
+Projeto       Local em que o conhecimento pode ser aplicado
+Registro      Evidência da atividade realmente executada
+```
+
+### Exemplos de organização
+
+```text
+Planejamento: Formação em Tecnologia
+
+Matéria: Desenvolvimento Web
+
+Assuntos
+├── HTML
+└── Java
+
+Materiais
+├── W3Schools - HTML
+└── W3Schools - Java
+
+Projetos
+└── Aplicar os conhecimentos em um sistema existente
+```
+
+```text
+Matéria: Engenharia de Software
+
+Assuntos
+├── Arquitetura
+└── SOLID
+
+Materiais
+├── Livro de Engenharia de Software - Marco Túlio
+└── Livro Princípios de SOLID
+
+Projetos
+└── Aplicar princípios no projeto de Precatórios
+```
+
+Um material ou projeto pode se relacionar a um ou vários assuntos. Essa
+associação deve ser opcional para que o planejamento não gere trabalho de
+classificação desnecessário. Quando informada, ela ajuda a sugerir os itens
+relevantes durante a criação de um registro.
+
+### Granularidade dos assuntos
+
+Os assuntos já existentes continuam sendo utilizados, mas devem representar
+divisões suficientemente amplas. Um assunto deve agrupar muitas sessões,
+diferentes materiais e possivelmente mais de um projeto.
+
+Detalhes menores não precisam ser cadastrados como assuntos permanentes. Eles
+podem ser informados em um campo livre do registro:
+
+```text
+Matéria: Engenharia de Software
+Assunto: SOLID
+Conteúdo realizado: Princípio da responsabilidade única
+```
+
+```text
+Matéria: Desenvolvimento Web
+Assunto: HTML
+Conteúdo realizado: Validação de formulários
+```
+
+Com isso, conceitos como princípio da responsabilidade única, formulários,
+tags semânticas ou um capítulo específico permanecem no histórico, sem exigir
+novos cadastros.
+
+### Etapas do planejamento de Tecnologia
+
+Uma configuração inicial de etapas pode ser:
+
+```text
+ASSUNTO
+QUESTOES_PERGUNTAS
+RESUMO
+REVISAO
+PRATICA
+```
+
+As etapas organizam os registros, mas não precisam impor uma sequência rígida.
+O usuário pode realizar várias sessões da mesma etapa, voltar a uma etapa
+anterior ou iniciar diretamente pela prática.
+
+O termo `ASSUNTO` possui dois usos que devem ser diferenciados na interface:
+
+```text
+Assunto selecionado: SOLID
+Etapa do registro: ASSUNTO (estudo do conteúdo)
+```
+
+A nomenclatura existente pode ser preservada, com um texto auxiliar que
+explique o significado da etapa.
+
+### Registro simples de Tecnologia
+
+O formulário comum pode conter somente:
+
+```text
+matéria                     obrigatória
+assunto                     obrigatório
+etapa                       obrigatória
+material                    opcional
+projeto                     opcional
+conteúdo realizado          texto curto e opcional
+tempo                       obrigatório
+observações                 opcionais
+```
+
+Os campos podem ganhar destaque conforme a etapa. Em
+`QUESTOES_PERGUNTAS`, podem aparecer quantidade, acertos, pergunta e resposta.
+Em `PRATICA`, o projeto recebe destaque. Material e projeto não são
+mutuamente exclusivos: o primeiro identifica a fonte do conhecimento e o
+segundo identifica onde ele foi aplicado.
+
+Exemplo de estudo:
+
+```text
+Matéria: Engenharia de Software
+Assunto: SOLID
+Etapa: ASSUNTO
+Material: Livro Princípios de SOLID
+Conteúdo realizado: Princípio da responsabilidade única
+Tempo: 00:40
+```
+
+Exemplo de aplicação:
+
+```text
+Matéria: Engenharia de Software
+Assunto: SOLID
+Etapa: PRATICA
+Material: Livro Princípios de SOLID
+Projeto: Sistema de Precatórios
+Conteúdo realizado: Separar responsabilidades do serviço de cálculo
+Tempo: 01:20
+```
+
+Quando o registro for iniciado a partir de um material, projeto ou item do
+planejamento, os dados conhecidos devem vir previamente preenchidos. A
+interface deve pedir apenas o que ainda for necessário para descrever a sessão.
 
 ## Pesquisa
 
